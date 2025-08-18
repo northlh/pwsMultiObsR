@@ -1,0 +1,19 @@
+NOTES:
+####
+control_default.control
+control.control renamed to control_default.control
+DESC: default (given) control file, adapted for pws via example 02 
+	contains all output variable names (or at least most, 78)
+	Runs for entire duration of .cbh files
+
+
+####
+control.control
+
+Description: updated version, reduce 78 output vars to 2, change time
+Edited nhruOutVar_names to 2,4,pkwater_equiv soil_lower_ratio
+Edited nsegmentOUtVar_names to 1,4,seg_outflow
+Edited start_time to 2010,10,1
+Edited end_time to 2020,9,30
+
+Water years 2001 through 2001 as start and end in the fns

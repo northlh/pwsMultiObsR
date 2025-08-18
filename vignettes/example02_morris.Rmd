@@ -1,0 +1,332 @@
+---
+title: "example02_morris"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{example02_morris}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+rm(list = ls()) # Clear Environment
+devtools::load_all() # FOR DEV
+#devtools::install()
+
+library(pwsMultiObsR)
+#ls("package:pwsMultiObsR")
+
+dir_root <- file.path("/Users/lnorth/Desktop/test_pwsMultiObsR")
+project_name <- "test_east"
+```
+# 2 User Input
+
+## 2.1 Parameter Min and Max
+This is where the parameters included in the sampling design are defined. In this example, we use 13 to make the model runs relatively low. For parameter sensitivity screening, you generally would want to include a larger number of parameters that could be influential, i.e. the 47 parameters that are commented out. 
+
+NOTE: 
+• This is a "small" portion of the parameters the "may" affect SWE & Q.
+• See table 1-2 in PRMS IV documentation (144 total params)
+• Some parameters are not straightforward for sampling, ie integers, sequences
+
+IMPORTANT: The first value is the minimum, the second value is the maximum. See table 1-3 in PRMS IV documentation (page 129) for more info.
+   
+```{r User Input, warning=TRUE}
+
+# param_names <- c(
+#   "dday_intcp","gwflow_coef","snow_cbh_adj","tmax_allrain_offset",
+#   "tmin_cbh_adj","tmax_cbh_adj","jh_coef","den_max","rain_cbh_adj",
+#   "tmax_allsnow","dday_slope","radmax","covden_sum","freeh2o_cap",
+#   "emis_noppt","soil_moist_max")
+
+param_names <- c("rad_trncf", "tmax_allsnow", "jh_coef", "tmax_cbh_adj")
+
+
+```
+
+## 2.2 Add Trial
+Use the function pws.search.trial to look at what projects or trials that have been created. Then use the pws.create.trial to create a new sensitivity analysis trial, you will be prompted for a brief description if you run the function individually (not the chunk). The arguments are as follows:
+                
+    project_name  character, string that matches an existing project folder name
+    
+    type          character, string that matches "default", "morris", or "LHS".
+                  Morris pertians to the sensitivity::morris function to
+                  create one-at-a-time samples, which generally requires fewer
+                  model runs and is applicable to screening. LHS pertains to 
+                  lhs::maximinLHS and is a all-at-a-time
+                  approach useful for quantifying parameter sensitivity and
+                  output uncertainty, but requires large sample sizes. 
+                  See Pianosi et al. (2016) and function documentation for
+                  more information.
+                  
+    param_attributes  The wide data.frame where ncol is the number of 
+                      parameters, row 1 is the minimum value, and row 2 is the
+                      maximum values.
+                      
+    nruns         integer, a user specified number of runs. If it is less than
+                  the minimum recommendation for type "morris", it will be
+                  coerced to the minimum recommendation. For type "LHS", a 
+                  warning message will be printed instead.
+                  
+This will generate a few unique parameter files, although in practice it would be thousands. Notice in the wd/Projects/project_name/input/trial_xxx folder there are indexed parameter files after the function runs. 
+
+```{r User Input, warning=TRUE}
+
+# Don't remember the projects or trials you already created? Run these!
+fm_project_search(dir_root = dir_root)
+fm_project_search(dir_root = dir_root, verbose = TRUE)
+```
+
+
+
+```{r User Input, warning=TRUE}
+
+?pwsMultiObsR::fm_trial_create
+
+directories <- fm_trial_create(
+  dir_root = dir_root,
+  project_name = project_name,
+  type = "morris",
+  param_names = param_names,
+  nruns = 20
+)
+```
+
+
+
+
+
+# 3 Run Model
+
+This calls a script that will parallelize the pywatershed runs across half of the available cores on the machine. We are using a 20 year run period between water 2001 and 2020. The example watershed has 10 HRUs, here are some benchmarks:
+
+- 960 20-year, 3 output runs took 1.593 hours over 6 cores
+- 4800 20-year, 5 output runs crashed at 26.6 hours (logarithmic performance decay)
+- 1000 20-year, 5 output runs took 1.503 hours (19.5 for 13000) over 10 cores
+
+Common errors include renamed parameter files, control files, cbh_files, etc Note, you must run the default script first to write the climate .nc files. To execute the python script, you may have to go into the shell to unrestrict the ExecutionPolicy (at least on Windows).
+
+The script will terminate if it detects performance degradation, and will likely need to be run in batches around 1000 runs. Once this limit is reached, it is recommended that you restart the computer to refresh the memory state. You may then re-run this chunk, but un-comment the 4 lines below that use pws.set.trial to reset your directories. The pws.run.SA is designed to not overwrite files and start where left off. 
+
+
+
+```{r setup}
+
+# If you have already created the trial and want to come back to it, use this:
+
+directories <- fm_trial_set(
+  dir_root = dir_root,
+  project_name = project_name,
+  trial_number = 2
+)
+
+```
+
+```{r Run Model, warning=TRUE}
+
+# ?run_batches
+# 
+# run_batches(
+#   dir_root = dir_root,
+#   project_name = project_name,
+#   trial_number = 2
+# )
+
+```
+
+```{r setup}
+?calc_gof
+
+gof_results <- calc_gof(
+  dir_root = dir_root,
+  project_name = project_name,
+  trial_number = directories$trial_number,
+  start_year = 2013,
+  end_year = 2022,
+  hru_out_names = "pkwater_equiv",
+  seg_out_names = "seg_outflow",
+  default = FALSE
+)
+
+```
+
+
+
+# 4 Goodness of Fit
+
+The function pws.analyze.output post-processes the model results. It is currently setup to run daily mean SWE and discharge. It writes goodness of fit (GOF) results in lists named "list_GOF_x" into the environment and saves them in the output directory.
+
+NOTE: some results may be empty (soil moisture and ASO) because these are under development
+
+```{r Analyze Output, warning=TRUE}
+
+# Be sure to have run pws.read.NRCS and pws.read.Q first!
+
+# Note that the control.control is set for 2003-2022 water years (20 years)
+start_year <- 1982
+#start_year <- 2013
+end_year <- 2022
+
+pws.set.trial("day_EastRiv",2)
+
+length(list.files(dynamic_output_dir))
+
+pws.analyze.output(nruns = nruns, #set to "nruns" or change
+                   hru_out_names = c(
+                     "pkwater_equiv","soil_rechr",
+                     "snowcov_area","hru_actet"
+                     ), #if none, set as c()
+                   seg_out_names = "seg_outflow", #if none, set as c()
+                   dynamic_output_dir = dynamic_output_dir,
+                   obs_dir = obs_dir,
+                   start_year = start_year,
+                   end_year = end_year,
+                   default = FALSE,
+                   overwrite = FALSE, #when TRUE, overwrites all files
+                   ASO = TRUE,
+                   SMAPL4 = TRUE)
+
+# # View results
+# 
+# view(SWE_results_GOF)
+# view(Q_results_GOF)
+
+```
+
+
+
+
+
+# 5 Sensitivity Indices
+
+This function returns a list with a similar structure to the fit statistics lists
+created above, but it calculates the Morris elementary effects statistics. If NA is specified for both n_boot or sd_level, the function will return baseline statistics with a near instantaneous run time. If bootstrapping, the recommended n_boot is 1000 and sd_level of 1, and it may take roughly 15 minutes per 10 HRUs and 2500 runs depending on how many datasets are used. 
+
+μ:  Indicates the direction and average magnitude of the parameter's effect.
+    Negative values indicate decreasing response with increasing parameter value.
+μ∗: Indicates the overall magnitude of the parameter's effect without
+    considering the direction. Large values imply strong influence.
+sigma: Indicates the variability in the parameter's effect. Large values
+       suggest interactions or non-linear effects.
+η∗: μ∗ normalized by the maximum μ∗ for each dataset
+ν∗ μ∗ normalized by the sum of μ∗ for each dataset
+
+```{r Calculate Sensitivity Indices, warning=TRUE}
+
+pws.set.trial("day_EastRiv", 2)
+
+pws.sensi.EET(dynamic_input_dir = dynamic_input_dir,
+              dynamic_output_dir = dynamic_output_dir,
+              variables = c("Q"
+                            ,"SWE","SMS2","SMS8","SMS20","MOD10A1","SMAPsfwt","openet","ASO"
+                            ), 
+              metrics = c("GOF"),
+              n_boot = 1000, # number of bootstrap replicates
+              sd_level = 1) # number of SD for upper and lower bounds
+
+# view(list_EET_SWE)
+# view(list_EET_Q)
+
+```
+
+
+
+
+
+
+# 6 Results
+
+NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY. IT WILL NOT WORK IF NA WAS SPECIFIED FOR THE BOOTSRAP ARGUMENTS IN PWS.SENSI.EET
+
+Lets run through a set of functions to visualize the elementary effects statistics that are calculated above. Following methods from Cuntz et al., 2015, we compute η*, which is the normalized mu_star (elementary effect). 
+```{r Dataframe, warning=TRUE}
+
+
+#pws.set.trial("final_EastRiv",4)
+
+# Merge all EET data into one list
+list_data <- list()
+variables <- c("Q",
+               "SWE","ASO","SMS2","SMAPsfwt","MOD10A1","openet"
+               )
+# Loop through each variable to dynamically load the list_EET files
+for (var in variables) {
+  file_path <- paste0(dynamic_output_dir, "/!list_EET_", var,"_GOF.json")
+  # Check if the file exists (to handle optional metrics)
+  if (file.exists(file_path)) {
+    list_data[[var]] <- fromJSON(file_path)
+  } else {
+    warning(paste("File not found:", file_path))
+  }
+}
+
+
+# Read in morris object
+morris_design <- readRDS(paste0(dynamic_input_dir, "/!morris_design.rds"))
+
+# Create list of dataframes to retrieve bootstrap results (lower, mean, upper)
+list_eta_dfs <- list()
+measures <- c("lower","mean","upper")
+
+for(i in seq_along(measures)){
+  
+  df_name <- paste0("df_",measures[i])
+  
+  list_eta_dfs[[df_name]] <- data.frame(
+    Q_09112500 = list_data$Q$`09112500`$total$NRMSE$bootstrap$eta_star[,i],
+    Q_09112200 = list_data$Q$`09112200`$total$NRMSE$bootstrap$eta_star[,i],
+    SWE_380 = list_data$SWE$CO$`380`$NRMSE$bootstrap$eta_star[,i],
+    SWE_737 = list_data$SWE$CO$`737`$NRMSE$bootstrap$eta_star[,i],
+    ASO_MAE_basin = list_data$ASO$MAE_bybasin$bootstrap$eta_star[,i],
+    ASO_MAE1 = list_data$ASO$MAE_byflight_AW$bootstrap$eta_star[[1]][,i],
+    ASO_MAE2 = list_data$ASO$MAE_byflight_AW$bootstrap$eta_star[[2]][,i],
+    SMS2_380 = list_data$SMS2$CO$`380`$NRMSE$bootstrap$eta_star[,i],
+    SMS2_737 = list_data$SMS2$CO$`737`$NRMSE$bootstrap$eta_star[,i],
+    SMAP = list_data$SMAPsfwt$NRMSE_bybasin$bootstrap$eta_star[,i],
+    SCA = list_data$MOD10A1$NRMSE_bybasin$bootstrap$eta_star[,i],
+    AET = list_data$openet$NRMSE_bybasin$bootstrap$eta_star[,i]
+  )
+  rownames(list_eta_dfs[[df_name]]) <- colnames(morris_design$X)
+}
+
+
+
+```
+
+Plot a heatmap of the sensitivity indices to get a visual sense for what parameters are influential. 
+
+```{r Heatmap, warning=TRUE}
+
+pws.sensi.plot.heatmap(df = list_eta_dfs$df_mean, #assigned from above fn
+                       plot_dir = plot_dir,
+                       plot_filename = "sensi_heatmap_41yr.png")
+
+```
+
+Now, lets determine which parameters are influential mathematically. This function plots the threshold η* value (in red) to determine if a parameter is sensitive. If above the threshold, it is considered influential. Note the "sensi_param_list" is assigned to the environment so you can see the influential parameters for each objective function and variable.
+
+NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY
+
+```{r Logistic, warning=TRUE}
+
+pws.sensi.plot.logis(df_mean = list_eta_dfs$df_mean,
+                     df_lower = list_eta_dfs$df_lower,
+                     df_upper = list_eta_dfs$df_upper,
+                     ncol_plot = 6,
+                     plot_dir = plot_dir,
+                     plot_filename = "plot_sensi_logis_scaleTrue2013.png")
+
+
+print(sensi_param_list)
+print(type2_param_list)
+
+write_json(x = sensi_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param2013.json"))
+write_json(x = type1_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param_type1_2013.json"))
+write_json(x = type2_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param_type2_2013.json"))
+```
