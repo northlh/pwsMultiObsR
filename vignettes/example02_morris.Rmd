@@ -156,6 +156,91 @@ gof_results <- calc_gof(
 
 ```
 
+```{r setup}
+?read_output
+
+gof_results <- read_output(
+  dir_root = dir_root,
+  project_name = project_name,
+  trial_number = directories$trial_number,
+  var_names = c("swe","q"),
+  metrics = c("gof","metric"),
+  list_type = c("gof")
+)
+
+```
+
+```{r setup}
+?sensi_eet
+
+time_start <- Sys.time()
+
+eet_results <- sensi_eet(
+  dir_root = dir_root,
+  project_name = project_name,
+  trial_number = directories$trial_number,
+  variables = c("swe","q")
+)
+
+duration <- Sys.time() - time_start
+
+```
+
+
+```{r setup}
+?read_output
+
+eet_results <- read_output(
+  dir_root = dir_root,
+  project_name = project_name,
+  trial_number = directories$trial_number,
+  var_names = c("swe","q"),
+  metrics = c("gof","metric"),
+  list_type = c("eet")
+)
+
+```
+
+```{r Calculate Sensitivity Indices, warning=TRUE}
+
+# Read in morris object
+morris_design <- readRDS(
+  file.path(directories$dir_dynamic_input, "!morris_design.rds"))
+
+# Create list of dataframes to retrieve bootstrap results (lower, mean, upper)
+list_eta_dfs <- list()
+measures <- c("lower","mean","upper")
+
+for(i in seq_along(measures)){
+  
+  df_name <- paste0("df_",measures[i])
+  
+  list_eta_dfs[[df_name]] <- data.frame(
+    Q_09112500 = eet_results$eet_list_gof_q$`09112500`$total$nrmse$bootstrap$eta_star[,i],
+    Q_09112200 = eet_results$eet_list_gof_q$`09112200`$total$nrmse$bootstrap$eta_star[,i],
+    SWE_380 = eet_results$eet_list_gof_swe$CO$`380`$nrmse$bootstrap$eta_star[,i],
+    SWE_737 = eet_results$eet_list_gof_swe$CO$`737`$nrmse$bootstrap$eta_star[,i]
+  )
+  rownames(list_eta_dfs[[df_name]]) <- colnames(morris_design$X)
+}
+
+```
+
+
+```{r Calculate Sensitivity Indices, warning=TRUE}
+
+?fit_logis
+
+logis_output <- fit_logis(
+  df_mean = list_eta_dfs$df_mean,
+  df_lower = list_eta_dfs$df_lower,
+  df_upper = list_eta_dfs$df_upper,
+  ncol_plot = 2,
+  dir_plot = directories$dir_plot
+)
+
+```
+
 
 
 # 4 Goodness of Fit

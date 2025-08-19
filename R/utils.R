@@ -11,9 +11,11 @@
 
   # Set list path structure
   if (list_type == "gof"){
-    path <- file.path(dir_dynamic_output, paste0("/!list_", metric, "_", var, ".json"))
+    path <- file.path(
+      dir_dynamic_output, paste0("/!list_", metric, "_", var, ".json"))
   } else if (list_type == "eet"){
-    path <- file.path(dir_dynamic_output, paste0("/!list_eet_", var, "_", metric, ".json"))
+    path <- file.path(
+      dir_dynamic_output, paste0("/!eet_list_", metric, "_", var, ".json"))
   }
 
   if (file.exists(path)) {
@@ -34,7 +36,7 @@
 #' @param dir_root character: parent working directory path
 #' @param project_name character: project name
 #' @param trial_number integer: trial number, leading zeros not needed
-#' @param var_names character: vector of types e.g. c("q", "swe", "smapsfwt"
+#' @param var_names character: vector of types e.g. c("q", "swe", "smapsfwt")
 #' @param metrics character: "gof" of "metric" to specify objective or
 #' predictive functions.
 #' @param list_type character: "gof" of "eet" to pull objective results or
@@ -47,7 +49,7 @@
 #'   dir_root = "/Users/me/mywork/",
 #'   project_name = "final_EastRiv",
 #'   trial_number = 3,
-#'   var_names = variables,
+#'   var_names = c("swe","q"),
 #'   metrics = "gof",
 #'   list_type = "gof")
 #'
@@ -65,7 +67,7 @@
 #'     dir_root = "/Users/me/mywork/",
 #'     project_name = test_proj_names[i],
 #'     trial_number = test_trial_nums[i],
-#'     var_names = variables,
+#'     var_names = c("swe","q"),
 #'     metrics = "gof",
 #'     list_type = "gof")
 #' }
@@ -80,11 +82,13 @@ read_output <- function(
     list_type)
 {
 
+  list_output <- list()
+
   directories <- pwsMultiObsR:::fm_trial_set(dir_root, project_name,
                                              trial_number)
-  type <- directorie["trial_type"]
-  dir_dynamic_input <- directories["dir_dynamic_input"]
-  dir_dynamic_output <- directories["dir_dynamic_output"]
+  type <- directories$trial_type
+  dir_dynamic_input <- directories$dir_dynamic_input
+  dir_dynamic_output <- directories$dir_dynamic_output
 
   if (!type %in% c("morris", "mmlhs")) {
     stop("Invalid trial type. Must be 'morris' or 'mmlhs'.")
@@ -103,10 +107,10 @@ read_output <- function(
     params <- read.csv(paste0(dir_dynamic_input,"/!mmlhs_params.csv"))
 
     list_data <- list()
-    for (var in variables) {
+    for (var in var_names) {
       for (metric in metrics) {
-        list_data[[paste0(var, "_", metric)]] <- .read_json(
-          list_type, var, metric, dir_dynamic_output)
+        list_data <- c(list_data, .read_json(
+          list_type, var, metric, dir_dynamic_output))
       }
     }
 
@@ -116,22 +120,21 @@ read_output <- function(
     params <- read.csv(paste0(dir_dynamic_input,"/!morris_params.csv"))
 
     list_data <- list()
-    for (var in variables) {
+    for (var in var_names) {
       for (metric in metrics) {
-        list_data[[paste0(var, "_", metric)]] <- .read_json(
-          list_type, var, metric, dir_dynamic_output)
+        list_data <- c(list_data, .read_json(
+          list_type, var, metric, dir_dynamic_output))
       }
     }
   }
 
-  list_name <- paste0("list_data_",project_name)
-  params_name <- paste0("params_",project_name)
+  # list_name <- paste0("list_data_",project_name)
+  # params_name <- paste0("params_",project_name)
+  #
+  # list_output <- list()
+  # list_output[list_name] <- list_data
 
-  list_output <- list()
-  list_output[params_name] <- params
-  list_output[list_name] <- list_data
-
-  return(output_list)
+  return(list_data)
 
 }
 

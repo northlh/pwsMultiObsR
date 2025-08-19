@@ -166,9 +166,14 @@
 #' Recursive function to apply EE and optionally bootstrap
 .recursive_apply <- function(lst, n_boot, sd_level, morris_design) {
   if (is.list(lst)) {
-    return(lapply(lst, .recursive_apply))
+    return(lapply(
+      lst,
+      .recursive_apply,
+      n_boot = n_boot,
+      sd_level = sd_level,
+      morris_design = morris_design))
   } else if (is.numeric(lst) && length(lst) == nrow(morris_design$X)) {
-    ee_matrix <- .extract_ee(lst)
+    ee_matrix <- .extract_ee(lst, morris_design)
     baseline <- .compute_measures(ee_matrix)
 
     if (!is.na(n_boot) && !is.na(sd_level)) { # run boot if not NA
@@ -198,10 +203,12 @@
 #' @param metrics chracter: single or vector of ouptut list type. Must be one
 #'  of c("gof", "metric")
 #' @param n_boot integer: number of bootstrap replicates of the elementary
-#'  effects vector
+#'  effects vector. Set to NA to retrieve baseline results
+#'  without bootstrapping (about 100x faster).
 #' @param sd_level numeric: number of standard devaitions for bootstrap upper
 #' and lower bounds. Should be 1 to match Cuntz et al., 2015, or 1.95 to
-#'  match Campolongo et al., 1997.
+#'  match Campolongo et al., 1997. Set to NA to retrieve baseline results
+#'  without bootstrapping (about 100x faster).
 #' @return list: nested list of metrics for each observation type specified
 #'
 #' @import jsonlite
@@ -226,8 +233,10 @@ sensi_eet <- function(dir_root,
   list_data <- list()
   for (var in variables) {
     for (metric in metrics) {
-      list_data[[paste0(var, "_", metric)]] <- (
-        .load_json_if_exists(var, metric, dir_dynamic_output))
+      # list_data[[paste0(var, "_", metric)]] <- (
+      #   .load_json_if_exists(var, metric, dir_dynamic_output))
+      list_data <- c(list_data, .load_json_if_exists(
+        var, metric, dir_dynamic_output))
     }
   }
 
@@ -241,15 +250,20 @@ sensi_eet <- function(dir_root,
     }
   }
 
+  # Add eet_ flag to the key
+  new_names <- paste0("eet_", names(results))
+  names(results) <- new_names
+
   # Save results
   for (key in names(results)) {
-    path <- file.path(dir_dynamic_output, paste0("!list_eet_", key, ".json"))
-    jsonlite::write_json(results[[key]], path)
-    message(paste0("Morris EET results written at: ", path))
+    path <- file.path(dir_dynamic_output, paste0("!", key, ".json"))
+    jsonlite::write_json(results[key], path, auto_unbox = TRUE, pretty = TRUE)
+    message("Morris EET results written at: ", path)
   }
 
   return(results)
 }
+
 
 
 # See appendix of Cuntz et al., 2015
@@ -389,8 +403,8 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
         nls(
           response ~ .logis_offset(
             x = rank1,
-            Lo = min(response),
-            A = max(response) - min(response),
+            lo = min(response),
+            aa = max(response) - min(response),
             k, xo
           ),
           start = list(k = start_k, xo = start_xo * length(response)), # Calibrating inits
@@ -544,11 +558,11 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
   type1_param_list[["all_unique_type1"]] <- all_unique_type1
   type2_param_list[["all_unique_type2"]] <- all_unique_type2
 
-  output_list["sensi_params"] <- sensi_param_list
-  output_list["type1_params"] <- type1_param_list
-  output_list["type2_params"] <- type2_param_list
-  output_list["thresholds"] <- sensi_thresholds
-  output_list["plot"] <- p
+  output_list[["sensi_params"]] <- sensi_param_list
+  output_list[["type1_params"]] <- type1_param_list
+  output_list[["type2_params"]] <- type2_param_list
+  output_list[["thresholds"]] <- sensi_thresholds
+  output_list[["plot"]] <- p
 
   return(output_list)
 }
