@@ -282,6 +282,8 @@ plot_usgs <- function(dir_root,
 #' @return ggplot: plot object
 #' @export
 #' @import ggplot2
+#' @import dplyr
+#' @importFrom rlang %||%
 plot_heatmap_eta <- function(
     df_eta,
     type1_params = NULL,
@@ -304,78 +306,19 @@ plot_heatmap_eta <- function(
                "already exists. Aborting to avoid overwriting."))
   }
 
-  if (!is.null(type1_params) || !is.null(type2_params)){
+  if (is.null(type1_params) | is.null(type2_params)){
     warning("Both error types must be input for them to show.")
   }
 
+  df_eta$param_names <- param_attributes$name
+  df_eta$param_groups <- param_attributes$module
 
-
-  # GGPLOT PLOTTING --------------------------------------------------------
-
-  # # Set color palette and breaks for the heatmap
-  # palette_name <- "YlGnBu"
-  # colors <- RcolorBrewer::brewer.pal(n = 6, name = palette_name)
-  # breaks <- seq(0, 1, by = 0.2)
-  #
-  # # Replace underscores with spaces in column names (for better readability in the plot)
-  # colnames(df) <- gsub("_", " ", colnames(df))
-  #
-  # # Convert the dataframe to a long format suitable for ggplot2
-  # df_long <- df %>%
-  #   rownames_to_column(var = "Params") %>%
-  #   pivot_longer(cols = -Params, names_to = "Metrics", values_to = "η*")
-  #
-  # # # Create bins for the η* values to be used in the plot
-  # # df_long$bin <- cut(df_long$`η*`, breaks = breaks, include.lowest = TRUE, right = FALSE)
-  #
-  # # Generate the heatmap using ggplot2
-  # p <- ggplot(df_long, aes(x = Metrics, y = Params, fill = `η*`)) +
-  #   geom_tile(color = "white", linewidth = 0.5, width = 0.667) +  # Adjust tile width
-  #   scale_fill_stepsn(name = "η*", colours = colors, guide = "coloursteps", breaks = breaks) +
-  #   theme_minimal() +
-  #   labs(x = "Output Metrics", y = "Parameter Name") +
-  #   theme(
-  #     axis.text.x = element_text(size = 12, angle = 90, vjust = 0.5, hjust = 1),
-  #     axis.text.y = element_text(size = 12),
-  #     axis.title.x = element_text(size = 14),
-  #     axis.title.y = element_text(size = 14),
-  #     legend.title = element_text(size = 14),
-  #     legend.text = element_text(size = 12)
-  #   )
-  #
-  # # Save the plot as PNG
-  # ggsave(filename = file.path(dir_plot, plot_filename),
-  #        plot = p, width = 10, height = 8, dpi = 300)
-  # cat("Heatmap has been saved as", file.path(dir_plot, plot_filename), " \n")
-
-
-  # The same param_names vector was used to create the SA runs!!!
-
-  # df_eta$param_names <- colnames(morris_design_Taylor$X) #convert to factor
-
-  df_eta$param_names <- param_attributes$names
-
-  df_eta <- df_eta %>%
-    dplyr::mutate(
-      param_names = factor(
-        param_names, levels = rev(sort(unique(param_names)))))
-  # df_eta$param_groups <- c("Climate","Climate","Climate","Climate","Climate",
-  #                          "Climate","Climate",
-  #                          "Solar", "Solar", "Solar", "Solar", "Solar",
-  #                          "Solar", "Solar",
-  #                          "PET", "PET",
-  #                          "Intcp.", "Intcp.", "Intcp.", "Intcp.", "Intcp.",
-  #                          "Snow", "Snow", "Snow", "Snow", "Snow", "Snow",
-  #                          "Snow", "Snow", "Snow", "Snow", "Snow", "Snow",
-  #                          "Runoff", "Runoff", "Runoff", "Runoff", "Runoff",
-  #                          "Soil", "Soil", "Soil", "Soil", "Soil", "Soil",
-  #                          "Soil", "Soil", "Soil", "Soil", "Soil", "Soil",
-  #                          "G")
-  df_eta$param_groups <- param_attributes$modules
+  df_eta$param_names <- factor(
+    df_eta$param_names, levels = rev(sort(unique( df_eta$param_names))))
 
   # Pivot the dataframe
   df_eta_long <- df_eta %>%
-    dplyr::pivot_longer(
+    pivot_longer(
       cols = -c(param_names, param_groups),
       names_to = "col_name",
       values_to = "eta.star"
@@ -383,65 +326,27 @@ plot_heatmap_eta <- function(
 
   if (!is.null(type1_params) & !is.null(type2_params)){
     error_data <- df_eta_long %>%
-      dplyr::rowwise() %>%
-      dplyr::mutate(
+      rowwise() %>%
+      mutate(
         error_marker = case_when(
           param_names %in% (type1_params[[col_name]] %||% character(0)) ~ "■",
           param_names %in% (type2_params[[col_name]] %||% character(0)) ~ "▲",
           TRUE ~ NA_character_
         )
       ) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(col_name, param_names, error_marker)  # Keep only relevant columns
+      ungroup() %>%
+      select(col_name, param_names, error_marker)  # Keep only relevant columns
 
     df_eta_long <- df_eta_long %>%
-      dplyr::left_join(error_data, by = c("param_names", "col_name"))
+      left_join(error_data, by = c("param_names", "col_name"))
   }
-
-
-  # # Split the column names into components
-  # df_eta_long <- df_eta_long %>%
-  #   separate(
-  #     col_name,
-  #     into = c("Observation", "Basin", "Site"),
-  #     sep = "_",
-  #     fill = "right" # This handles cases where "Site" is missing
-  #   ) %>%
-  #   # Handle missing site numbers (if needed)
-  #   mutate(Site = ifelse(is.na(Site), "", Site)) %>%
-  #   # Create a new column for display-friendly x-axis labels
-  #   mutate(Basin_Site = ifelse(Site == "", Basin, paste(Basin, Site, sep = "_")))
-  #
-  # # Replace underscores with spaces in the x-axis labels
-  # df_eta_long <- df_eta_long %>%
-  #   mutate(Basin_Site = gsub("_", " ", Basin_Site)) # Replace "_" with " "
-  #
-  #
-  #
-  # # ERROR DATA - REPEAT THE SAME STEPS SO THE ERRORS ARE ALIGNED
-  # # Split the column names into components
-  # error_data <- error_data %>%
-  #   separate(
-  #     col_name,
-  #     into = c("Observation", "Basin", "Site"),
-  #     sep = "_",
-  #     fill = "right" # This handles cases where "Site" is missing
-  #   ) %>%
-  #   # Handle missing site numbers (if needed)
-  #   mutate(Site = ifelse(is.na(Site), "", Site)) %>%
-  #   # Create a new column for display-friendly x-axis labels
-  #   mutate(Basin_Site = ifelse(Site == "", Basin, paste(Basin, Site, sep = "_")))
-  #
-  # # Replace underscores with spaces in the x-axis labels
-  # error_data <- error_data %>%
-  #   mutate(Basin_Site = gsub("_", " ", Basin_Site)) # Replace "_" with " "
 
   # Define custom order for facets
   df_eta_long <- df_eta_long %>%
-    dplyr::mutate(
+    mutate(
       param_groups = factor(
         param_groups, levels = c(
-          "Climate", "Solar", "PET","Snow","Intception", "Runoff",
+          "Climate", "Solar", "PET","Snow","Interception", "Runoff",
           "Soil", "Groundwater"))
     )
 

@@ -354,14 +354,6 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
                           start_xo = 0.8,
                           start_k = 1,
                           plot_filename = "plot_sensi_logis.png") {
-  # CHECKS ------------------------------------------------------------------
-
-  # Check if the output plot file already exists
-  if (file.exists(file.path(dir_plot, plot_filename))) {
-    stop(paste("The file:", plot_filename,
-               "already exists. Aborting to avoid overwriting."))
-  }
-
 
   # FIT LOGISTIC FN  ---------------------------------------------------------
 
@@ -538,14 +530,6 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
   # Display the combined plot
   print(p)
 
-  # Save the plot as PNG
-  ggsave(
-    filename = file.path(dir_plot, plot_filename),
-    plot = p, width = 6.5, height = 4, dpi = 300
-  )
-  cat("Logistic plot has been saved as",
-      file.path(dir_plot, plot_filename), " \n")
-
   # ID UNIQUE ALL PARAMS ----------------------------------------------------
 
   # Find all unique row names from the rowname_list
@@ -563,6 +547,22 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
   output_list[["type2_params"]] <- type2_param_list
   output_list[["thresholds"]] <- sensi_thresholds
   output_list[["plot"]] <- p
+
+
+  # Check if the output plot file already exists
+  if (file.exists(file.path(dir_plot, plot_filename))) {
+    warning(paste("The file:", plot_filename,
+               "already exists. Aborting to avoid overwriting."))
+    return(output_list)
+  }
+
+  # Save the plot as PNG
+  ggsave(
+    filename = file.path(dir_plot, plot_filename),
+    plot = p, width = 6.5, height = 4, dpi = 300
+  )
+  cat("Logistic plot has been saved as",
+      file.path(dir_plot, plot_filename), " \n")
 
   return(output_list)
 }

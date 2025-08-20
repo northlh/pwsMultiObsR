@@ -617,15 +617,16 @@
   mmlhs <- sampling_matrix
   pa <- param_attributes
 
-  sampling_matrix <- matrix(NA, nrow = nrow(mmlhss), ncol = ncol(mmlhs))
+  mmlhs_params <- matrix(NA, nrow = nrow(mmlhs), ncol = ncol(mmlhs))
   for (j in seq_len(ncol(mmlhs))){
-    sampling_matrix[,j] <- .ig_normalize_reverse(
-      x_n = mmlhss[,j],
+    mmlhs_params[,j] <- .ig_normalize_reverse(
+      x_n = mmlhs[,j],
       max_x_a = pa[j, "max"],
       min_x_a = pa[j, "min"])
   }
 
   colnames(sampling_matrix) <- rownames(param_attributes)
+  colnames(mmlhs_params) <- rownames(param_attributes)
 
   # Store the param attributtes, sampling_matrix, and design in the input dir
   # list_mmlhs["mmlhs_samples"] <- sampling_matrix
@@ -671,6 +672,6 @@
   msg <- paste("Total elapsed time:", time_total, "for", nruns, "model runs")
   log_info(msg)
 
-  return(invisble(NULL))
+  return(invisible(NULL))
 
 }

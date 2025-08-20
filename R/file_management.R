@@ -327,7 +327,7 @@ fm_trial_create <- function(dir_root,
 
   # CONDITIONS FOR MMLHS
   if (type == "mmlhs") {
-    k <- ncol(param_attributes)
+    k <- nrow(param_attributes)
 
     log_info("For mmlhs sampling, nruns is the number of repetitions")
     log_info("The recommended nruns is > 1000*k where k is number of factors")
