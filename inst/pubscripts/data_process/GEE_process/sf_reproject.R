@@ -1,5 +1,5 @@
 
-
+library(sf)
 
 # # Filename in
 # hru_filename <- "model_nhru.shp"
@@ -44,10 +44,10 @@ hru_sf <- st_buffer(hru_sf, dist = -100)
 
 # # Find intersections
 # intersections <- st_intersects(hru_sf)
-# 
+#
 # # Check if any polygons intersect with others
 # intersecting_polygons <- which(sapply(intersections, length) > 1)
-# 
+#
 # if (length(intersecting_polygons) > 0) {
 #   cat("Polygons with intersections:", intersecting_polygons, "\n")
 # } else {

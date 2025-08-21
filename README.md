@@ -8,7 +8,7 @@ An R package for sensitivity and uncertainty analysis of the USGS [pywatershed](
 
 2. Install [RStudio](https://posit.co/downloads/)
 
-3. In a R script or RStudio console execute: `devtools::install_github("northlh/pwsMultiObsR", build_vignettes = TRUE`)`
+3. In a R script or RStudio console execute: `devtools::install_github("northlh/pwsMultiObsR", build_vignettes = TRUE)`
 
 4. View the vignettes by executing: `utils::browseVignettes("pwsMultiObsR")`
 

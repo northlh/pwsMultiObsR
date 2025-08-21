@@ -42,6 +42,9 @@ plot_snotel<- function(dir_root,
   # READ METADATA -----------------------------------------------------------
 
   # Read metadata from source data folder
+  #https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&counttype=statelist
+  # "NRCS National Water Climate Center -
+  # Active SNOTEL Stations as of 2025-August-20"
   station_data <- read.csv(system.file("example_obs",
                                        "nrcs_metadata_clean.csv",
                                        package = "pwsMultiObsR"))

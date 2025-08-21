@@ -99,7 +99,7 @@ read_output <- function(
   }
 
   if (type == "mmlhs" && list_type == "eet"){
-    stop("Invalid list type. No  lists for MMLHS trials.")
+    stop("Invalid list type. No  lists for mmlhs trials.")
   }
 
   if (type == "mmlhs"){
@@ -113,8 +113,6 @@ read_output <- function(
           list_type, var, metric, dir_dynamic_output))
       }
     }
-
-
   } else if (type == "morris"){
 
     params <- read.csv(paste0(dir_dynamic_input,"/!morris_params.csv"))
@@ -128,13 +126,85 @@ read_output <- function(
     }
   }
 
-  # list_name <- paste0("list_data_",project_name)
-  # params_name <- paste0("params_",project_name)
-  #
-  # list_output <- list()
-  # list_output[list_name] <- list_data
-
   return(list_data)
-
 }
+
+
+#' Load example pywatershed files and observations
+#'
+#' This package contains example model files and observations for the
+#' Blue, Dolores, East, and Taylor river in Colorado, USA.
+#'
+#' @param dir_root character: parent working directory path
+#' @param project_name character: project name
+#' @param example_catchment character: name of the example catchment, must be
+#' either 'BlueRiv', 'DoloresRiv', 'EastRiv', or 'TaylorRiv'.
+#' @export
+load_example_inputs <- function(
+    dir_root,
+    project_name,
+    example_catchment){
+
+  if (!(example_catchment %in% c(
+    'BlueRiv', 'DoloresRiv', 'EastRiv', 'TaylorRiv'))){
+    stop("example_catchment must be named
+         'BlueRiv', 'DoloresRiv', 'EastRiv', or 'TaylorRiv'")
+  }
+
+  dir_project <- file.path(dir_root, project_name)
+
+  # Get source files
+  src_aso <- system.file(
+    file.path("example_obs", example_catchment, "aso_data_df.csv"),
+    package = "pwsMultiObsR")
+
+  src_mod10a1 <- system.file(
+    file.path("example_obs", example_catchment, "mod10a1_data_df.csv"),
+    package = "pwsMultiObsR")
+
+  src_smap <- system.file(
+    file.path("example_obs", example_catchment, "smapsfwt_data_df.csv"),
+    package = "pwsMultiObsR")
+
+  src_openet <- system.file(
+    file.path("example_obs", example_catchment, "openet_data_df.csv"),
+    package = "pwsMultiObsR")
+
+  src_input <- list.files(
+    system.file(
+      file.path("example_input", example_catchment),
+      package = "pwsMultiObsR"), full.names = TRUE)
+
+  src_gis <- list.files(
+    system.file(
+      file.path("example_input", example_catchment, "GIS"),
+      package = "pwsMultiObsR"), full.names = TRUE)
+
+  # Copy source files
+  file.copy(from = src_aso,
+            to = file.path(dir_project, "obs/aso"),
+            overwrite = FALSE)
+  file.copy(from = src_mod10a1,
+            to = file.path(dir_project, "obs/mod10a1"),
+            overwrite = FALSE)
+
+  file.copy(from = src_smap,
+            to = file.path(dir_project, "obs/smap"),
+            overwrite = FALSE)
+
+  file.copy(from = src_openet,
+            to = file.path(dir_project, "obs/openet"),
+            overwrite = FALSE)
+
+  file.copy(from = input_src,
+            to = file.path(dir_project, "default_input"),
+            overwrite = FALSE)
+
+  file.copy(from = gis_src,
+            to = file.path(dir_project, "gis"),
+            overwrite = FALSE)
+
+  return(invisible(NULL))
+}
+
 
