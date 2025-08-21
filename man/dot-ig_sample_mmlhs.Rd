@@ -4,7 +4,7 @@
 \alias{.ig_sample_mmlhs}
 \title{Create mmlhs parameter files}
 \usage{
-.ig_sample_mmlhs(nruns, param_attributes, dir_default_input, dir_dynamic_input)
+.ig_sample_mmlhs(nruns, param_attributes, dir_dynamic_input)
 }
 \arguments{
 \item{nruns}{integer: Number of desired runs (should be 1000 * param number)}

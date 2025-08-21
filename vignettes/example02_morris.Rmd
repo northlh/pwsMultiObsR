@@ -140,6 +140,13 @@ directories <- fm_trial_set(
 
 ```
 
+
+# 4 Goodness of Fit
+
+The function pws.analyze.output post-processes the model results. It is currently setup to run daily mean SWE and discharge. It writes goodness of fit (GOF) results in lists named "list_GOF_x" into the environment and saves them in the output directory.
+
+NOTE: some results may be empty (soil moisture and ASO) because these are under development
+
 ```{r setup}
 ?calc_gof
 
@@ -169,6 +176,22 @@ gof_results <- read_output(
 )
 
 ```
+
+
+# 5 Sensitivity Indices
+
+This function returns a list with a similar structure to the fit statistics lists
+created above, but it calculates the Morris elementary effects statistics. If NA is specified for both n_boot or sd_level, the function will return baseline statistics with a near instantaneous run time. If bootstrapping, the recommended n_boot is 1000 and sd_level of 1, and it may take roughly 15 minutes per 10 HRUs and 2500 runs depending on how many datasets are used. 
+
+μ:  Indicates the direction and average magnitude of the parameter's effect.
+    Negative values indicate decreasing response with increasing parameter value.
+μ∗: Indicates the overall magnitude of the parameter's effect without
+    considering the direction. Large values imply strong influence.
+sigma: Indicates the variability in the parameter's effect. Large values
+       suggest interactions or non-linear effects.
+η∗: μ∗ normalized by the maximum μ∗ for each dataset
+ν∗ μ∗ normalized by the sum of μ∗ for each dataset
+
 
 ```{r setup}
 ?sensi_eet
@@ -201,6 +224,14 @@ eet_results <- read_output(
 
 ```
 
+# 6 Results
+
+NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY. IT WILL NOT WORK IF NA WAS SPECIFIED FOR THE BOOTSRAP ARGUMENTS IN PWS.SENSI.EET
+
+Lets run through a set of functions to visualize the elementary effects statistics that are calculated above. Following methods from Cuntz et al., 2015, we compute η*, which is the normalized mu_star (elementary effect). 
+
+
+
 ```{r Calculate Sensitivity Indices, warning=TRUE}
 
 # Read in morris object
@@ -227,6 +258,10 @@ for(i in seq_along(measures)){
 ```
 
 
+Now, lets determine which parameters are influential mathematically. This function plots the threshold η* value (in red) to determine if a parameter is sensitive. If above the threshold, it is considered influential. Note the "sensi_param_list" is assigned to the environment so you can see the influential parameters for each objective function and variable.
+
+NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY
+
 ```{r Calculate Sensitivity Indices, warning=TRUE}
 
 ?fit_logis
@@ -241,177 +276,21 @@ logis_output <- fit_logis(
 
 ```
 
-
-
-# 4 Goodness of Fit
-
-The function pws.analyze.output post-processes the model results. It is currently setup to run daily mean SWE and discharge. It writes goodness of fit (GOF) results in lists named "list_GOF_x" into the environment and saves them in the output directory.
-
-NOTE: some results may be empty (soil moisture and ASO) because these are under development
-
-```{r Analyze Output, warning=TRUE}
-
-# Be sure to have run pws.read.NRCS and pws.read.Q first!
-
-# Note that the control.control is set for 2003-2022 water years (20 years)
-start_year <- 1982
-#start_year <- 2013
-end_year <- 2022
-
-pws.set.trial("day_EastRiv",2)
-
-length(list.files(dynamic_output_dir))
-
-pws.analyze.output(nruns = nruns, #set to "nruns" or change
-                   hru_out_names = c(
-                     "pkwater_equiv","soil_rechr",
-                     "snowcov_area","hru_actet"
-                     ), #if none, set as c()
-                   seg_out_names = "seg_outflow", #if none, set as c()
-                   dynamic_output_dir = dynamic_output_dir,
-                   obs_dir = obs_dir,
-                   start_year = start_year,
-                   end_year = end_year,
-                   default = FALSE,
-                   overwrite = FALSE, #when TRUE, overwrites all files
-                   ASO = TRUE,
-                   SMAPL4 = TRUE)
-
-# # View results
-# 
-# view(SWE_results_GOF)
-# view(Q_results_GOF)
-
-```
-
-
-
-
-
-# 5 Sensitivity Indices
-
-This function returns a list with a similar structure to the fit statistics lists
-created above, but it calculates the Morris elementary effects statistics. If NA is specified for both n_boot or sd_level, the function will return baseline statistics with a near instantaneous run time. If bootstrapping, the recommended n_boot is 1000 and sd_level of 1, and it may take roughly 15 minutes per 10 HRUs and 2500 runs depending on how many datasets are used. 
-
-μ:  Indicates the direction and average magnitude of the parameter's effect.
-    Negative values indicate decreasing response with increasing parameter value.
-μ∗: Indicates the overall magnitude of the parameter's effect without
-    considering the direction. Large values imply strong influence.
-sigma: Indicates the variability in the parameter's effect. Large values
-       suggest interactions or non-linear effects.
-η∗: μ∗ normalized by the maximum μ∗ for each dataset
-ν∗ μ∗ normalized by the sum of μ∗ for each dataset
+Plot a heatmap of the sensitivity indices to get a visual sense for what parameters are influential. 
 
 ```{r Calculate Sensitivity Indices, warning=TRUE}
 
-pws.set.trial("day_EastRiv", 2)
+?plot_heatmap_eta
 
-pws.sensi.EET(dynamic_input_dir = dynamic_input_dir,
-              dynamic_output_dir = dynamic_output_dir,
-              variables = c("Q"
-                            ,"SWE","SMS2","SMS8","SMS20","MOD10A1","SMAPsfwt","openet","ASO"
-                            ), 
-              metrics = c("GOF"),
-              n_boot = 1000, # number of bootstrap replicates
-              sd_level = 1) # number of SD for upper and lower bounds
+param_attributes <- read.csv(file.path(directories$dir_dynamic_input, "!param_attributes.csv"))
 
-# view(list_EET_SWE)
-# view(list_EET_Q)
+plot_heatmap_eta(
+  df_eta = list_eta_dfs$df_mean,
+  type1_params = logis_output$type1_params,
+  type2_params = logis_output$type2_params,
+  param_attributes = param_attributes,
+  dir_plot = directories$dir_plot
+)
 
 ```
 
-
-
-
-
-
-# 6 Results
-
-NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY. IT WILL NOT WORK IF NA WAS SPECIFIED FOR THE BOOTSRAP ARGUMENTS IN PWS.SENSI.EET
-
-Lets run through a set of functions to visualize the elementary effects statistics that are calculated above. Following methods from Cuntz et al., 2015, we compute η*, which is the normalized mu_star (elementary effect). 
-```{r Dataframe, warning=TRUE}
-
-
-#pws.set.trial("final_EastRiv",4)
-
-# Merge all EET data into one list
-list_data <- list()
-variables <- c("Q",
-               "SWE","ASO","SMS2","SMAPsfwt","MOD10A1","openet"
-               )
-# Loop through each variable to dynamically load the list_EET files
-for (var in variables) {
-  file_path <- paste0(dynamic_output_dir, "/!list_EET_", var,"_GOF.json")
-  # Check if the file exists (to handle optional metrics)
-  if (file.exists(file_path)) {
-    list_data[[var]] <- fromJSON(file_path)
-  } else {
-    warning(paste("File not found:", file_path))
-  }
-}
-
-
-# Read in morris object
-morris_design <- readRDS(paste0(dynamic_input_dir, "/!morris_design.rds"))
-
-# Create list of dataframes to retrieve bootstrap results (lower, mean, upper)
-list_eta_dfs <- list()
-measures <- c("lower","mean","upper")
-
-for(i in seq_along(measures)){
-  
-  df_name <- paste0("df_",measures[i])
-  
-  list_eta_dfs[[df_name]] <- data.frame(
-    Q_09112500 = list_data$Q$`09112500`$total$NRMSE$bootstrap$eta_star[,i],
-    Q_09112200 = list_data$Q$`09112200`$total$NRMSE$bootstrap$eta_star[,i],
-    SWE_380 = list_data$SWE$CO$`380`$NRMSE$bootstrap$eta_star[,i],
-    SWE_737 = list_data$SWE$CO$`737`$NRMSE$bootstrap$eta_star[,i],
-    ASO_MAE_basin = list_data$ASO$MAE_bybasin$bootstrap$eta_star[,i],
-    ASO_MAE1 = list_data$ASO$MAE_byflight_AW$bootstrap$eta_star[[1]][,i],
-    ASO_MAE2 = list_data$ASO$MAE_byflight_AW$bootstrap$eta_star[[2]][,i],
-    SMS2_380 = list_data$SMS2$CO$`380`$NRMSE$bootstrap$eta_star[,i],
-    SMS2_737 = list_data$SMS2$CO$`737`$NRMSE$bootstrap$eta_star[,i],
-    SMAP = list_data$SMAPsfwt$NRMSE_bybasin$bootstrap$eta_star[,i],
-    SCA = list_data$MOD10A1$NRMSE_bybasin$bootstrap$eta_star[,i],
-    AET = list_data$openet$NRMSE_bybasin$bootstrap$eta_star[,i]
-  )
-  rownames(list_eta_dfs[[df_name]]) <- colnames(morris_design$X)
-}
-
-
-
-```
-
-Plot a heatmap of the sensitivity indices to get a visual sense for what parameters are influential. 
-
-```{r Heatmap, warning=TRUE}
-
-pws.sensi.plot.heatmap(df = list_eta_dfs$df_mean, #assigned from above fn
-                       plot_dir = plot_dir,
-                       plot_filename = "sensi_heatmap_41yr.png")
-
-```
-
-Now, lets determine which parameters are influential mathematically. This function plots the threshold η* value (in red) to determine if a parameter is sensitive. If above the threshold, it is considered influential. Note the "sensi_param_list" is assigned to the environment so you can see the influential parameters for each objective function and variable.
-
-NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY
-
-```{r Logistic, warning=TRUE}
-
-pws.sensi.plot.logis(df_mean = list_eta_dfs$df_mean,
-                     df_lower = list_eta_dfs$df_lower,
-                     df_upper = list_eta_dfs$df_upper,
-                     ncol_plot = 6,
-                     plot_dir = plot_dir,
-                     plot_filename = "plot_sensi_logis_scaleTrue2013.png")
-
-
-print(sensi_param_list)
-print(type2_param_list)
-
-write_json(x = sensi_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param2013.json"))
-write_json(x = type1_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param_type1_2013.json"))
-write_json(x = type2_param_list, path = file.path(dynamic_output_dir,"!list_sensi_param_type2_2013.json"))
-```

@@ -9,7 +9,8 @@
   dimensions,
   parameters,
   param_attributes,
-  dir_dynamic_input
+  dir_dynamic_input,
+  nruns
 )
 }
 \arguments{

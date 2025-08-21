@@ -20,7 +20,7 @@ read_output(
 
 \item{trial_number}{integer: trial number, leading zeros not needed}
 
-\item{var_names}{character: vector of types e.g. c("q", "swe", "smapsfwt"}
+\item{var_names}{character: vector of types e.g. c("q", "swe", "smapsfwt")}
 
 \item{metrics}{character: "gof" of "metric" to specify objective or
 predictive functions.}
@@ -42,7 +42,7 @@ gof_data = read_output(
   dir_root = "/Users/me/mywork/",
   project_name = "final_EastRiv",
   trial_number = 3,
-  var_names = variables,
+  var_names = c("swe","q"),
   metrics = "gof",
   list_type = "gof")
 
@@ -60,7 +60,7 @@ for (i in seq_len(my_proj_names)){
     dir_root = "/Users/me/mywork/",
     project_name = test_proj_names[i],
     trial_number = test_trial_nums[i],
-    var_names = variables,
+    var_names = c("swe","q"),
     metrics = "gof",
     list_type = "gof")
 }

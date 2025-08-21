@@ -29,11 +29,13 @@ one of c("swe", "q", "sms2", "sms8", "sms20", "smapsfwt", "aso", "mod10a1",
 of c("gof", "metric")}
 
 \item{n_boot}{integer: number of bootstrap replicates of the elementary
-effects vector}
+effects vector. Set to NA to retrieve baseline results
+without bootstrapping (about 100x faster).}
 
 \item{sd_level}{numeric: number of standard devaitions for bootstrap upper
 and lower bounds. Should be 1 to match Cuntz et al., 2015, or 1.95 to
-match Campolongo et al., 1997.}
+match Campolongo et al., 1997. Set to NA to retrieve baseline results
+without bootstrapping (about 100x faster).}
 }
 \value{
 list: nested list of metrics for each observation type specified

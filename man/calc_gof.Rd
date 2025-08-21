@@ -12,7 +12,7 @@ calc_gof(
   end_year,
   hru_out_names = c("pkwater_equiv", "snowcov_area", "hru_actet", "soil_rechr"),
   seg_out_names = "seg_outflow",
-  default = FALSE,
+  default,
   aso = FALSE,
   smapl4 = FALSE,
   overwrite = FALSE

@@ -4,7 +4,7 @@
 \alias{.ig_sample_morris}
 \title{Create morris parameter files}
 \usage{
-.ig_sample_morris(r, param_attributes, dir_default_input, dir_dynamic_input)
+.ig_sample_morris(r, param_attributes, dir_dynamic_input)
 }
 \arguments{
 \item{r}{numeric: 2D matrix of normalized parameters.}

@@ -13,7 +13,7 @@ run_batches(
   out_var_names = c("seg_outflow", "pkwater_equiv", "snowcov_area", "soil_rechr",
     "hru_actet"),
   performance = "medium",
-  batch_size = 100,
+  batch_size = 48,
   pause_time = 60
 )
 }
@@ -38,7 +38,7 @@ of cores to use. WARNING: this is not intended to be used on high performance
 compute clusters or multi-tenant systems.}
 
 \item{batch_size}{integer: the number of of simulations before memory
-cleanup.}
+cleanup. Set to 48 for optimal 4 or 6 core allocations.}
 
 \item{pause_time}{integer: time in seconds to shut down the previous
 operation and do memory cleanup.}
