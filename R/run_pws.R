@@ -201,6 +201,8 @@
 
 
 #' Helper to setup a parallel plan, wrapper for .run_simulation
+#' @import future
+#' @import furrr
 .run_parallel <- function(dir_root,
                           project_name,
                           trial_number,
@@ -222,7 +224,7 @@
 
   performance <- match.arg(performance, c("low", "medium", "high"))
   worker_num <- .set_workers(performance)
-  future::plan(multisession, workers = worker_num)
+  future::plan(future::multisession, workers = worker_num)
 
   # OVERWRITE PROTECTION ----------------------------------------------------
 
@@ -268,7 +270,7 @@
       dir_python = dir_python,
       pwsenvname = pwsenvname,
       out_var_names = out_var_names,
-      .options = furrr_options(seed = TRUE),
+      .options = furrr::furrr_options(seed = TRUE),
       .progress = FALSE
     )
 
@@ -315,7 +317,7 @@
     current_run <- current_run + worker_num
   }
 
-  future::plan(sequential) # Reset the future plan
+  future::plan(future::sequential) # Reset the future plan
 
   return()
 }
@@ -486,9 +488,6 @@ run_default <- function(dir_root,
     to = temp_working_dir,
     overwrite = FALSE
   )
-
-  print(temp_working_dir)
-  print(list.files(file.path(temp_working_dir, "default_input")))
 
   # Set the working directory to the temporary directory
   old_wd <- setwd(temp_working_dir)

@@ -41,7 +41,9 @@ given user specifeid boundaries in a shapefile.
 }
 \examples{
 
-plot_snotel("/Users/me/mywork/",
-            "east_river")
+plot_snotel(
+  "/Users/me/mywork/",
+  "east_river"
+)
 
 }

@@ -21,10 +21,7 @@ The root directory is where you would like your work to be placed, and the proje
 
 ```{r}
 
-# rm(list = ls()) # Clear Environment
-# devtools::load_all() # FOR DEV
-# #ls("package:pwsMultiObsR")
-
+rm(list = ls()) # Clears Global Environment!!!
 library(pwsMultiObsR)
 
 dir_root <- file.path("/Users/lnorth/Desktop/test_pwsMultiObsR")
@@ -62,7 +59,7 @@ directories <- fm_trial_create(
   project_name = project_name,
   type = "mmlhs",
   param_names = param_names,
-  nruns = 30
+  nruns = 36
 )
 
 
@@ -90,8 +87,9 @@ The operation will terminate if it detects performance degradation (i.e. compute
 run_batches(
   dir_root = dir_root,
   project_name = project_name,
-  trial_number = 3,
-  pwsenvname = "pws"
+  trial_number = directories$trial_number,
+  pwsenvname = "pws",
+  batch_size = 12
 )
 
 ```

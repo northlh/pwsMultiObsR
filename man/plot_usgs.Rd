@@ -38,7 +38,9 @@ Maps USGS stations given user specified PRMS legacy shapefiles.
 }
 \examples{
 
-plot_usgs("/Users/me/mywork/",
-            "east_river")
+plot_usgs(
+  "/Users/me/mywork/",
+  "east_river"
+)
 
 }

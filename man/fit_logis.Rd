@@ -29,8 +29,12 @@ The rows should be named by the parameters for more tangible results.}
 \item{dir_plot}{character: path where plot is saved. Obtain using
 fm_set_trial and inputting the "dir_plot" object.}
 
+\item{start_k}{numeric: sigmoid steepness (calibrate from 1)}
+
 \item{plot_filename}{character: the name of the plot including the .png
 extension.}
+
+\item{start_x0}{numeric: sigmoid midpoint (calibrate from 0.8)}
 }
 \value{
 list: nested list of the identified parameters, errors, thresholds,

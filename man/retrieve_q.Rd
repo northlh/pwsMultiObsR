@@ -35,18 +35,22 @@ Return and save a list of USGS discharge data
 \examples{
 
 # Input list must follow this format
-usgs_stations <- list(site_ids = c("09112500", "09112200"),
-                      seg_ids = c(5,4))
+usgs_stations <- list(
+  site_ids = c("09112500", "09112200"),
+  seg_ids = c(5, 4)
+)
 
 
 start_date <- "1970-10-01"
 end_date <- "2023-09-30"
 
-retrieve_q(dir_proj = "/Users/me/mywork/"
-           project_name = "East_River",
-           usgs_stations = usgs_stations,
-           start_date = "1970-10-01",
-           end_date = "2023-09-30",
-           overwrite = FALSE)
+retrieve_q(
+  dir_proj = "/Users/me/mywork/",
+  project_name = "East_River",
+  usgs_stations = usgs_stations,
+  start_date = "1970-10-01",
+  end_date = "2023-09-30",
+  overwrite = FALSE
+)
 
 }

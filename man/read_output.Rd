@@ -38,31 +38,34 @@ the model outputs (GOF or general statistics)
 \examples{
 
 # Get data from a single project
-gof_data = read_output(
+gof_data <- read_output(
   dir_root = "/Users/me/mywork/",
   project_name = "final_EastRiv",
   trial_number = 3,
-  var_names = c("swe","q"),
+  var_names = c("swe", "q"),
   metrics = "gof",
-  list_type = "gof")
+  list_type = "gof"
+)
 
 # Can use it in a loop to get data from multiple projects
-my_proj_names <- c("final_BlueRiv", "final_DoloresRiv",
-                   "final_EastRiv", "final_TaylorRiv")
-my_trial_nums <- c(3,3,3,3)
+my_proj_names <- c(
+  "final_BlueRiv", "final_DoloresRiv",
+  "final_EastRiv", "final_TaylorRiv"
+)
+my_trial_nums <- c(3, 3, 3, 3)
 all_output <- list()
 
-for (i in seq_len(my_proj_names)){
-
-  output_name <- paste0("output_",i)
+for (i in seq_len(my_proj_names)) {
+  output_name <- paste0("output_", i)
 
   all_output[output_name] <- read_output(
     dir_root = "/Users/me/mywork/",
     project_name = test_proj_names[i],
     trial_number = test_trial_nums[i],
-    var_names = c("swe","q"),
+    var_names = c("swe", "q"),
     metrics = "gof",
-    list_type = "gof")
+    list_type = "gof"
+  )
 }
 
 }

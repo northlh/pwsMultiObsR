@@ -23,10 +23,7 @@ The root directory is where you would like your work to be placed, and the proje
 
 ```{r}
 
-# rm(list = ls()) # Clear Environment
-# devtools::load_all() # FOR DEV
-# #ls("package:pwsMultiObsR")
-
+rm(list = ls()) # Clears Global Environment!!!
 library(pwsMultiObsR)
 
 dir_root <- file.path("/Users/lnorth/Desktop/test_pwsMultiObsR")
@@ -68,7 +65,7 @@ The climate-by-HRU (.cbh) files are the same as the .day files from the National
 load_example_inputs(
   dir_root = dir_root,
   project_name = project_name,
-  example_catchment = "EastRiv"
+  example_catchment = "TaylorRiv"
 )
 
 ```
@@ -118,13 +115,38 @@ See the NRCS iMap to view SNOTEL gauges and their site IDs: https://www.nrcs.usd
 
 ```{r}
 
-# EAST RIVER
-nrcs_stations <- list(CO = list(site_ids = c(380, 737),
-                                  hru_ids = c(8,10)))
+# # EAST RIVER
+# nrcs_stations <- list(CO = list(site_ids = c(380, 737),
+#                                   hru_ids = c(8,10)))
+# 
+# usgs_stations <- list(site_ids = c("09112500", "09112200"),
+#                       seg_ids = c(5,4))
 
-usgs_stations <- list(site_ids = c("09112500", "09112200"),
-                      seg_ids = c(5,4))
 
+# # BLUE RIVER
+# nrcs_stations <- list(CO = list(site_ids = c(531),
+#                                   hru_ids = c(2)))
+# 
+# usgs_stations <- list(site_ids = c("09046490", "09046600"),
+#                       seg_ids = c(3,1))
+
+
+
+# # DOLORES
+# nrcs_stations <- list(CO = list(site_ids = c(465, 586, 739, 1060, 1185),
+#                                   hru_ids = c(9, 9, 7, 2, 11)))
+# 
+# usgs_stations <- list(site_ids = c("09165000", "09166500"),
+#                       seg_ids = c(7, 4))
+
+
+
+# TAYLOR RIVER
+nrcs_stations <- list(CO = list(site_ids = c(1141),
+                                  hru_ids = c(2)))
+
+usgs_stations <- list(site_ids = c("09107000"),
+                      seg_ids = c(2))
 ```
 
 ## 2.3  Read in SNOTEL data

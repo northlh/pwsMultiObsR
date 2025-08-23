@@ -26,7 +26,8 @@ function to complete.
 \examples{
 
 df_w_waterday <- addWaterDay(df,
-                             date_colname = Date,
-                             wy_colname = waterYear)
+  date_colname = Date,
+  wy_colname = waterYear
+)
 
 }

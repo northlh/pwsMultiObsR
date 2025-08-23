@@ -2,7 +2,7 @@
 % Please edit documentation in R/data_retrieval.R
 \name{retrieve_nrcs}
 \alias{retrieve_nrcs}
-\title{Retrieve NRCS data from the SNOTEL network}
+\title{Retrieve nrcs data from the SNOTEL network}
 \usage{
 retrieve_nrcs(dir_root, project_name, nrcs_stations, overwrite = FALSE)
 }
@@ -13,7 +13,7 @@ retrieve_nrcs(dir_root, project_name, nrcs_stations, overwrite = FALSE)
 
 \item{nrcs_stations}{list: contains station IDs and respective pws HRU's.
 state_id: the two-letter state abbreviations
-site_ids: numeric vector containing the site ID numbers for NRCS
+site_ids: numeric vector containing the site ID numbers for nrcs
 hru_ids: numeric vector of the corresponding hru number to site_id}
 
 \item{overwrite}{logical: TRUE or FALSE to overwrite existing files}
@@ -25,23 +25,30 @@ list: retrieved data of full period of record (not checked)
 Return and save a list of SNOTEL data
 }
 \details{
-Data is accessed via the NRCS report generator:
+Data is accessed via the nrcs report generator:
 https://wcc.sc.egov.usda.gov/reportGenerator/
 }
 \examples{
 
 # Input list must follow this format
-NRCS_stations_test <- list(CO = list(site_ids = c(380, 737),
+nrcs_stations_test <- list(CO = list(
+  site_ids = c(380, 737),
+  #                                       hru_ids = c(8,10)),
 
-                           CA = list(site_ids = c(356),
+  CA = list(
+    site_ids = c(356),
+    #                                       hru_ids = c(8)),
 
-                           UT = list(site_ids = c(766)),
-                                     hru_ids = c(8))
-                           )
+    UT = list(site_ids = c(766)),
+    hru_ids = c(8)
+  )
+))
 
-retrieve_nrcs(dir_proj = "/Users/me/mywork/"
-              project_name = "East_River",
-              nrcs_stations = nrcs_stations,
-              overwrite = FALSE)
+nrcs_data <- retrieve_nrcs(
+  dir_proj = "/Users/me/mywork/",
+  project_name = "East_River",
+  nrcs_stations = nrcs_stations,
+  overwrite = FALSE
+)
 
 }

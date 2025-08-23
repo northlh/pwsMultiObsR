@@ -363,6 +363,8 @@ sensi_eet <- function(dir_root,
 #' @param ncol_plot integer: number of columns in the faceted plot
 #' @param dir_plot character: path where plot is saved. Obtain using
 #' fm_set_trial and inputting the "dir_plot" object.
+#' @param start_k numeric: sigmoid steepness (calibrate from 1)
+#' @param start_x0 numeric: sigmoid midpoint (calibrate from 0.8)
 #' @param plot_filename character: the name of the plot including the .png
 #' extension.
 #' @return list: nested list of the identified parameters, errors, thresholds,
@@ -427,7 +429,9 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
         )
       },
       error = function(e) {
-        stop(paste("Error in nls fitting for column:", column_name))
+        stop(paste("Error in nls fitting for column:", column_name,
+                   ", Examine eta_star data and try adjusting calibration
+                   initial values (start_k, and start_xo)."))
       }
     )
 

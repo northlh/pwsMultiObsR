@@ -21,10 +21,7 @@ The root directory is where you would like your work to be placed, and the proje
 
 ```{r}
 
-# rm(list = ls()) # Clear Environment
-# devtools::load_all() # FOR DEV
-# #ls("package:pwsMultiObsR")
-
+rm(list = ls()) # Clears Global Environment!!!
 library(pwsMultiObsR)
 
 dir_root <- file.path("/Users/lnorth/Desktop/test_pwsMultiObsR")
@@ -89,7 +86,7 @@ The operation will terminate if it detects performance degradation (i.e. compute
 run_batches(
   dir_root = dir_root,
   project_name = project_name,
-  trial_number = 2,
+  trial_number = directories$trial_number,
   pwsenvname = "pws"
 )
 
@@ -205,7 +202,7 @@ for(i in seq_along(measures)){
 
 ```
 
-Now, lets identify which parameters are sensitive mathematically. This function plots the threshold η* value (in red) to determine if a parameter is sensitive. If above the threshold, it is considered sensitive. Note that the return of this function allows you to view the identified parameters and statistical errors. 
+Now, lets identify which parameters are sensitive mathematically. This function plots the threshold η* value (in red) to determine if a parameter is sensitive. If above the threshold, it is considered sensitive. Note that the return of this function allows you to view the identified parameters and statistical errors. Some data may have trouble processing due to the small parameter and sample size in this example. 
 
 NOTE: THIS FUNCTION IS DESIGNED TO WORK WITH BOOTSRAP RESULTS ONLY
 
@@ -218,7 +215,9 @@ logis_output <- fit_logis(
   df_lower = list_eta_dfs$df_lower,
   df_upper = list_eta_dfs$df_upper,
   ncol_plot = 2,
-  dir_plot = directories$dir_plot
+  dir_plot = directories$dir_plot,
+  start_xo = 0.8,
+  start_k = 4
 )
 
 ```
