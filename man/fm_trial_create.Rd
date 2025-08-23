@@ -15,7 +15,10 @@ fm_trial_create(dir_root, project_name, type, param_names = NULL, nruns = NULL)
 
 \item{param_names}{character vector: vector of parameter names to be sampled}
 
-\item{nruns}{integer: number of desired simulations for morris or mmlhs}
+\item{nruns}{integer: number of desired simulations for morris or mmlhs. For
+morris, the preferred nruns is k*(1+k), where k is the number of parameters,
+For mmlhs, the preferred nruns in k*1000, hence why this follows the
+sensitivity analysis.}
 }
 \value{
 list: list of project directories and metadata

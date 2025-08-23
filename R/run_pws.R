@@ -1,9 +1,9 @@
-
 #' @import logger
 .init_logger <- function(dir_root, project_name, trial_number,
                          log_level = "INFO") {
   directories <- pwsMultiObsR:::fm_trial_set(
-    dir_root, project_name, trial_number)
+    dir_root, project_name, trial_number
+  )
   log_dir <- file.path(directories["dir_project"], "logs")
   if (!dir.exists(log_dir)) dir.create(log_dir, recursive = TRUE)
 
@@ -23,7 +23,7 @@
   return(invisible(NULL))
 }
 
-
+#' Function to determine worker count based on 'performance' level
 #' @import logger
 .set_workers <- function(performance) {
   cores <- parallel::detectCores()
@@ -59,7 +59,7 @@
   return(valid_runs)
 }
 
-# Function to check for existing folders and adjust runs to avoid overwriting
+#' Function to check for existing folders and adjust runs to avoid overwriting
 .check_existing_runs <- function(runs, dir_dynamic_output) {
   adjusted_runs <- vector() # To hold runs that don't already have folders
   for (run in runs) {
@@ -67,8 +67,10 @@
     if (!dir.exists(run_dir)) {
       adjusted_runs <- c(adjusted_runs, run) # Add runs without existing folders
     } else {
-      msg <- paste("Folder for run", run,
-                   "already exists. Skipping this run.")
+      msg <- paste(
+        "Folder for run", run,
+        "already exists. Skipping this run."
+      )
       log_info(msg)
     }
   }
@@ -76,7 +78,11 @@
 }
 
 
-
+#' Function to copy model output in temporary directory to model directory
+#'
+#' @param temp_working_dir character: created in .run_simulation
+#' @param model_dir character: full file path of the .nc output file created
+#' in .run_simulation
 #' @import logger
 .temp_to_output <- function(out_var_names, temp_working_dir, model_dir) {
   # Validate input
@@ -88,8 +94,10 @@
 
   # Copy files dynamically
   for (name in out_var_names) {
-    src <- file.path(temp_working_dir,
-                     "SA_temp_out", "nhm", paste0(name, ".nc"))
+    src <- file.path(
+      temp_working_dir,
+      "SA_temp_out", "nhm", paste0(name, ".nc")
+    )
     dest <- file.path(model_dir, paste0(name, ".nc"))
 
     if (!file.exists(src)) {
@@ -192,7 +200,7 @@
 }
 
 
-# Helper to setup a parallel plan
+#' Helper to setup a parallel plan, wrapper for .run_simulation
 .run_parallel <- function(dir_root,
                           project_name,
                           trial_number,
@@ -322,8 +330,10 @@
 #' @param project_name character: project name
 #' @param trial_number integer: trial number, leading zeros not needed
 #' @param runs numeric: a sequence of simulation indices to execute. The
-#' indices correspond to the parameter file indices. E.g. seq(1, nruns, 1).
-#' @param pwsenvname character: The name of your python environmnent where the
+#' indices correspond to the parameter file indices. If left as NULL, it will
+#' default to seq(1, nruns, 1). Nruns is determined by the project_name that
+#' is passed.
+#' @param pwsenvname character: The name of your python environment where the
 #' python 'pywatershed' package is installed.
 #' @param out_var_names character: a vector of the output file names that should
 #' be saved.
@@ -395,8 +405,10 @@ run_batches <- function(dir_root,
 
     end_time <- Sys.time()
     duration <- as.numeric(difftime(end_time, start_time, units = "secs"))
-    msg <- paste0("Batch ", batch_idx, " duration is: ",
-                  duration, " seconds")
+    msg <- paste0(
+      "Batch ", batch_idx, " duration is: ",
+      duration, " seconds"
+    )
     log_info(msg)
 
     batch_log <- rbind(batch_log, data.frame(
@@ -438,7 +450,7 @@ run_batches <- function(dir_root,
 #' @param trial_number integer: trial number, leading zeros not needed
 #' @param runs numeric: a sequence of simulation indices to execute. The
 #' indices correspond to the parameter file indices. E.g. seq(1, nruns, 1).
-#' @param pwsenvname character: The name of your python environmnent where the
+#' @param pwsenvname character: The name of your python environment where the
 #' python 'pywatershed' package is installed.
 #' @export
 run_default <- function(dir_root,
@@ -476,7 +488,7 @@ run_default <- function(dir_root,
   )
 
   print(temp_working_dir)
-  print(list.files(file.path(temp_working_dir,"default_input")))
+  print(list.files(file.path(temp_working_dir, "default_input")))
 
   # Set the working directory to the temporary directory
   old_wd <- setwd(temp_working_dir)

@@ -19,25 +19,25 @@ knitr::opts_chunk$set(
 # 1 Setup Directories
 
 ## 1.1 Setup root directory
-This notebook is designed to run an example pywatershed model with no user intervention (run all). If you encounter errors in running the model, it is recommended to re-run this chunk to reset the environment/directories since they can get jumbled by the python calls.
+The root directory is where you would like your work to be placed, and the project name is a subdirectory for a specific method, catchment, or whatever the user decides. 
 
-```{r setup}
+```{r}
 
-rm(list = ls()) # Clear Environment
-devtools::load_all() # FOR DEV
+# rm(list = ls()) # Clear Environment
+# devtools::load_all() # FOR DEV
+# #ls("package:pwsMultiObsR")
 
-#library(pwsMultiObsR)
-#ls("package:pwsMultiObsR")
+library(pwsMultiObsR)
 
 dir_root <- file.path("/Users/lnorth/Desktop/test_pwsMultiObsR")
-project_name <- "test_east"
+project_name <- "example_east"
 
 ```
 
 ## 1.2 Create Project
-This function uses one argument, a character string as the project name of your choice. It will create a parent folder called "Projects" and then create your project folder within that. This is intended to represent one basin or can be used to manage directories for experiments.
+This function creates a new folder in "dir_root" called "projects". From here on out, the package will operate within the projects folder. You can have multiple projects (specified by project_name above).
 
-```{r setup}
+```{r}
 
 ?pwsMultiObsR::fm_project_create
 
@@ -56,25 +56,29 @@ You must add files to the "default_input" directory that was just created in the
       • tmin.cbh
 
 *For this example:*
-In the main directory is a folder called "EastRiv_example_defaults" which contains all necessary files for a run. The control_default.control file is specific to this default run. All contents will be automatically moved over by the function below, but this will need to be done manually in all other projects.
+In the package root all necessary files for a run are contained in "inst/example_inputs/". All contents will be automatically copied to the new project by the function below, but this will need to be done manually in all other projects.
 
 NOTE:
-The climate-by-HRU (.cbh) files are the same as the .day files received from the NHM. They need to be renamed to the names above to be compatible with pws. USGS collaborators have provided CBH files as they are clipped from the NHM - they are interpolated from the 1km gridded daymet dataset: https://pubs.usgs.gov/tm/06/b09/tm6b9.pdf. They may be able to be generated using the PRMS legacy edition, see page 86 of PRMS-IV documentation https://pubs.usgs.gov/tm/6b7/pdf/tm6-b7.pdf.
+The climate-by-HRU (.cbh) files are the same as the .day files from the National Hydrologic Model (NHM). They files need to match the names above to be compatible with pws. These are tab delimited meteorologic inputs, see USGS documentaiton for more information https://pubs.usgs.gov/tm/6b7/pdf/tm6-b7.pdf.
 
-```{r User Input, warning=TRUE}
+```{r}
 
-# Function to copy the files from the example GIS and default dirs
-pws.load.example.files(wd = here(),
-                       project_name = "day_EastRiv")
+?pwsMultiObsR::load_example_inputs
+
+load_example_inputs(
+  dir_root = dir_root,
+  project_name = project_name,
+  example_catchment = "EastRiv"
+)
 
 ```
 
-The function below creates a "trial" which is essentially a sub directory within the project. The intent of the trials is to have the default runs and sensitivity/uncertainty runs belong to the same project, and thus observations, GIS, default inputs, etc..
+The function below creates a "trial" which is a sub directory within the project. The intent of the trials is to have the default, sensitivity. and uncertainty simulations belong to the same project, and call the same GIS files, default inputs, etc..
 
 NOTE:
-There should only be one default run per project. The folder for project_name/output/trial_001 will be empty because the default results are stored in the default_output directory. Future developments include forcing the first trial to be default, overwrite protection, and providing an option to do other "default" experiments without interfering with the true default.
+There should only be one default run per project. The folder for project_name/output/trial_001 will be empty because the default results are stored in the default_output directory. Future developments include forcing the first trial to be default, overwrite protection, and increasing flexibility for one-off simulations. 
 
-```{r setup}
+```{r}
 
 ?pwsMultiObsR::fm_trial_create
 
@@ -97,10 +101,9 @@ directories <- fm_trial_create(
 ## 2 Load Observations
 
 # 2,1 View SNOTEL and USGS Stations
-*For this example:*
-In the main directory is a folder called "EastRiv_example_GIS" which contains all necessary files for the following functions. These files are clips from the NHM, received from USGS collaborators. The files were automatically moved over by pws.load.example.files, but this will need to be done manually in all other projects. 
+See where the USGS steamgages and SNOTEL observation stations are realtive the the "model_nhru.shp" file copied over in the steps above. 
 
-```{r setup}
+```{r}
 
 plot_snotel(dir_root = dir_root, project_name = project_name)
 
@@ -109,11 +112,11 @@ plot_usgs(dir_root = dir_root, project_name = project_name)
 ```
 
 # 2.2 Align Stations with the Model
-You'll notice that some of the SNOTEL stations lie close to an HRU border, an overall basin boundary, or that the NHM segments are unclear. You will need to do some additional investigation for these stations to determine which model HRU or segment they belong to. Once you have determined your observation network, write the stations into a list as shown in the following chunk. This has already been completed for this example.
+You'll notice that some of the SNOTEL stations lie close to an HRU border, an overall basin boundary, or that the NHM segments are unclear. You may need to do some additional investigation for these stations to determine which model HRU or segment they belong to. Once you have determined your observation network, write the stations into a list as shown in the following chunk. This has already been completed for this example.
 
 See the NRCS iMap to view SNOTEL gauges and their site IDs: https://www.nrcs.usda.gov/programs-initiatives/sswsf-snow-survey-and-water-supply-forecasting-program/national-water-and
 
-```{r setup}
+```{r}
 
 # EAST RIVER
 nrcs_stations <- list(CO = list(site_ids = c(380, 737),
@@ -125,9 +128,9 @@ usgs_stations <- list(site_ids = c("09112500", "09112200"),
 ```
 
 ## 2.3  Read in SNOTEL data
-This function uses a url connection, and times out at 60 seconds which may require more than one attempt if internet is slow. Currently it is hard-coded to only extract SWE and soil moisture, but it can do all others. It will extract for the full length of available record.
+This function uses a url connection, and times out at 60 seconds which may require more than one attempt if internet is slow. Currently it is hard-coded to only extract SWE and soil moisture, but it can do all others. It will extract for the full length of available record. This will create the observation data in "/projects/project_name/obs/nrcs/".
 
-```{r Read Observations, warning=TRUE}
+```{r}
 
 nrcs_data <- retrieve_nrcs(
   dir_root = dir_root,
@@ -138,9 +141,9 @@ nrcs_data <- retrieve_nrcs(
 ```
 
 ## 2.4 Read in USGS data
-This function is relatively fast, using the DataRetrieval package. It requires a date range for the readNWIS function (okay to overshoot period of record).
+This function is relatively fast, using the DataRetrieval package. It requires a date range for the readNWIS function (okay to overshoot period of record). This will create the observation data in "/projects/project_name/obs/usgs/".
 
-```{r Read Observations, warning=TRUE}
+```{r}
 
 usgs_data <- retrieve_q(
   dir_root = dir_root,
@@ -153,9 +156,9 @@ usgs_data <- retrieve_q(
 ```
 
 # 3 Run Model
-If you run into errors here, be sure to reset the working directory bu running the first chunk before trying again. Troubleshooting steps may involve checking the filenames in the default_input directory, checking some of the variables or file calls in the control file, or checking your python or pywatershed installation. A default run may take several minutes depending on you machine and modeling domain. In this example, we run (43 yrs) of the 10 HRU East River watershed using default inputs from the NHM.
+If you run into errors here, be sure to reset the working directory and/or restarting the R session before trying again. Troubleshooting steps may involve checking the filenames in the default_input directory, checking some of the variables or file calls in the control file, or checking your python or pywatershed environment name. A default run may take several minutes depending on you machine and modeling domain. In this example, we run (43 yrs) of the 10 HRU East River watershed using default inputs from the NHM.
 
-```{r Run Model, warning=TRUE}
+```{r}
 
 ?run_default
 
@@ -167,9 +170,10 @@ run_default(dir_root = dir_root,
 ```
 
 # 4 Analyze Output
-The function pws.analyze.output post-processes the model results. It is currently setup to run daily mean SWE and discharge. It writes goodness of fit (GOF) results in lists named "list_GOF_x" into the environment and saves them in the output directory.
+The function calc_gof post-processes the model results using pre-selected "goodness of fit" functions. It writes goodness of fit results in lists named "list_gof_obsType" in the default ouput directory.
 
-```{r setup}
+```{r}
+
 ?calc_gof
 
 gof_results <- calc_gof(

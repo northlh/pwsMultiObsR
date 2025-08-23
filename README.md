@@ -14,6 +14,8 @@ An R package for sensitivity and uncertainty analysis of the USGS [pywatershed](
 
 5. Start by running or viewing the example workbooks (.Rmd). They may also be viewed in the [github]() web interface.
 
+WARNING: This software was lasted tested with pywatershed version 1.2.0
+
 ## About
 
 The package was designed to carry out multi-observation model diagnostics of the USGS pywatershed model. The compatible observations with this package are:

@@ -212,23 +212,28 @@
 
       if (length(q_sim_month) > 0 && length(q_obs_month) > 0) {
         list_gof_q[[usgs_site_id]]$monthly$nse[
-          run, month_idx] <- hydroGOF::NSE(
+          run, month_idx
+        ] <- hydroGOF::NSE(
           q_sim_month, q_obs_month
         )
         list_gof_q[[usgs_site_id]]$monthly$nrmse[
-          run, month_idx] <- hydroGOF::nrmse(
+          run, month_idx
+        ] <- hydroGOF::nrmse(
           q_sim_month, q_obs_month
         )
         list_gof_q[[usgs_site_id]]$monthly$rsq[
-          run, month_idx] <- hydroGOF::R2(
+          run, month_idx
+        ] <- hydroGOF::R2(
           q_sim_month, q_obs_month
         )
         list_gof_q[[usgs_site_id]]$monthly$pbias[
-          run, month_idx] <- hydroGOF::pbias(
+          run, month_idx
+        ] <- hydroGOF::pbias(
           q_sim_month, q_obs_month
         )
         list_gof_q[[usgs_site_id]]$monthly$kge[
-          run, month_idx] <- hydroGOF::KGE(
+          run, month_idx
+        ] <- hydroGOF::KGE(
           q_sim_month, q_obs_month
         )
       }
@@ -527,7 +532,6 @@
   # Find dimensions for this analysis
   nhru <- length(nhru_area_weights)
   nflights <- nrow(obs_data) # MIGHT NEED TO FIND A WAY TO NAME THE FLIGHTS
-  # water_years <- unique(sim$waterYear)
 
   # Initialize list elements for gof metrics if the first one is not there
   if (!is.numeric(list_gof_aso[["MAE_bybasin"]])) {
@@ -712,7 +716,6 @@
     # Subset both data frames by shared dates
     mod10a1_sim <- sim_data[sim_data$Date %in% shared_dates, ] # all columns
     mod10a1_obs <- obs_data[obs_data$Date %in% shared_dates, ]
-    # print(nrow(mod10a1_obs))
 
     # Date related work is done, subset the matrices and
     mod10a1_sim_matrix <- mod10a1_sim %>%
@@ -1995,7 +1998,6 @@
                            dir_dynamic_input,
                            nhru_area_weights,
                            list_metric_swe = NULL) {
-
   # Initialize list_metric_swe if it is not provided
   if (is.null(list_metric_swe)) {
     list_metric_swe <- list()
@@ -2063,7 +2065,8 @@
     metrics_swe$pk_basin_ann[wy_index] <- max(annual_data$A_weighted_avg)
     # Annual hru-based peak swe, this subsets the last columns
     metrics_swe$pk_hru_ann[wy_index, ] <- apply(
-      annual_data[, (ncol(annual_data) - (nhru - 1)):ncol(annual_data)], 2, max)
+      annual_data[, (ncol(annual_data) - (nhru - 1)):ncol(annual_data)], 2, max
+    )
   } # close for wy_index
 
   # Calculate averages for all water years (entire simulation)
@@ -2292,22 +2295,23 @@
 #' @import jsonlite
 #' @export
 calc_gof <- function(dir_root,
-                   project_name,
-                   trial_number,
-                   start_year,
-                   end_year,
-                   hru_out_names = c(
-                     "pkwater_equiv", "snowcov_area",
-                     "hru_actet", "soil_rechr"
-                   ),
-                   seg_out_names = "seg_outflow",
-                   default,
-                   aso = FALSE,
-                   smapl4 = FALSE,
-                   overwrite = FALSE) {
-
-  directories <- pwsMultiObsR:::fm_trial_set(dir_root, project_name,
-                                             trial_number)
+                     project_name,
+                     trial_number,
+                     start_year,
+                     end_year,
+                     hru_out_names = c(
+                       "pkwater_equiv", "snowcov_area",
+                       "hru_actet", "soil_rechr"
+                     ),
+                     seg_out_names = "seg_outflow",
+                     default,
+                     aso = FALSE,
+                     smapl4 = FALSE,
+                     overwrite = FALSE) {
+  directories <- pwsMultiObsR:::fm_trial_set(
+    dir_root, project_name,
+    trial_number
+  )
   dir_dynamic_output <- directories$dir_dynamic_output
   dir_dynamic_input <- directories$dir_dynamic_input
   dir_obs <- directories$dir_obs
@@ -2321,7 +2325,7 @@ calc_gof <- function(dir_root,
   # Check which lists to write based on user input
   if ("pkwater_equiv" %in% hru_out_names) {
     output_list_names <- c(
-      output_list_names, "list_gof_swe","list_metric_swe"
+      output_list_names, "list_gof_swe", "list_metric_swe"
     )
   }
 
@@ -2399,16 +2403,20 @@ calc_gof <- function(dir_root,
 
   if (any(c("pkwater_equiv", "soil_rechr") %in% hru_out_names)) {
     nrcs_data_list <- jsonlite::fromJSON(file.path(
-      dir_obs, "snotel/nrcs_data_list.json"))
+      dir_obs, "snotel/nrcs_data_list.json"
+    ))
     nrcs_stations <- jsonlite::fromJSON(file.path(
-      dir_obs, "snotel/nrcs_stations.json"))
+      dir_obs, "snotel/nrcs_stations.json"
+    ))
   }
 
   if ("seg_outflow" %in% seg_out_names) {
     usgs_data_list <- jsonlite::fromJSON(file.path(
-      dir_obs, "usgs/usgs_data_list.json"))
+      dir_obs, "usgs/usgs_data_list.json"
+    ))
     usgs_stations <- jsonlite::fromJSON(file.path(
-      dir_obs, "usgs/usgs_stations.json"))
+      dir_obs, "usgs/usgs_stations.json"
+    ))
   }
 
   if ("hru_actet" %in% hru_out_names) {

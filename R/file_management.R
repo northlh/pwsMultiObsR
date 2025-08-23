@@ -127,7 +127,10 @@ fm_project_search <- function(dir_root, verbose = FALSE) {
 #' @param project_name character: project name
 #' @param type character: string of either "default", "morris", or "mmlhs"
 #' @param param_names character vector: vector of parameter names to be sampled
-#' @param nruns integer: number of desired simulations for morris or mmlhs
+#' @param nruns integer: number of desired simulations for morris or mmlhs. For
+#' morris, the preferred nruns is k*(1+k), where k is the number of parameters,
+#' For mmlhs, the preferred nruns in k*1000, hence why this follows the
+#' sensitivity analysis.
 #' @return list: list of project directories and metadata
 #' @examples
 #' # for a default run
@@ -406,7 +409,7 @@ fm_trial_set <- function(dir_root, project_name, trial_number) {
   # Initialize list for directories
   list_trial <- list()
 
-  dir_root = file.path(dir_root)
+  dir_root <- file.path(dir_root)
 
   main_folder <- file.path(dir_root, "projects")
   project_path <- file.path(main_folder, project_name)
@@ -432,11 +435,13 @@ fm_trial_set <- function(dir_root, project_name, trial_number) {
   metadata_log <- readLines(metadata_file)
 
   # Find the line corresponding to the trial number
-  trial_line <- metadata_log[grep(paste0("^", trial_number, "\t"),
-                                  metadata_log)]
+  trial_line <- metadata_log[grep(
+    paste0("^", trial_number, "\t"),
+    metadata_log
+  )]
 
   if (length(trial_line) == 0) {
-    stop(paste0("Trial number:", trial_number," not found in the trial log"))
+    stop(paste0("Trial number:", trial_number, " not found in the trial log"))
   }
 
   # Extract the nruns and type values from the line
@@ -448,18 +453,24 @@ fm_trial_set <- function(dir_root, project_name, trial_number) {
 
   dir_default_input <- file.path(project_path, "default_input")
   dir_default_output <- file.path(project_path, "default_output")
-  dir_dynamic_input <- file.path(project_path, "input",
-                                 paste0("trial_", trial_num))
-  dir_dynamic_output <- file.path(project_path, "output",
-                                  paste0("trial_", trial_num))
+  dir_dynamic_input <- file.path(
+    project_path, "input",
+    paste0("trial_", trial_num)
+  )
+  dir_dynamic_output <- file.path(
+    project_path, "output",
+    paste0("trial_", trial_num)
+  )
   dir_plot <- file.path(project_path, "plot", paste0("trial_", trial_num))
   dir_python <- system.file("python", "pws_parallel.py",
-                            package = "pwsMultiObsR")
+    package = "pwsMultiObsR"
+  )
 
   if (type == "default") { # DIFFERENT ONLY FOR DEFAULT
     dir_dynamic_output <- file.path(project_path, "default_output")
     dir_python <- system.file("python", "pws_default.py",
-                              package = "pwsMultiObsR")
+      package = "pwsMultiObsR"
+    )
   }
 
 

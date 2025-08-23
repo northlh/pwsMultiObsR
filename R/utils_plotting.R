@@ -18,23 +18,24 @@
 #' @return ggplot: plot object
 #' @examples
 #'
-#' plot_snotel("/Users/me/mywork/",
-#'             "east_river")
+#' plot_snotel(
+#'   "/Users/me/mywork/",
+#'   "east_river"
+#' )
 #'
 #' @export
 #' @import ggplot2
 #' @import dplyr
 #' @import sf
-plot_snotel<- function(dir_root,
-                       project_name,
-                       hru_filename = "model_nhru.shp",
-                       gages_filename = "model_npoigages.shp",
-                       buffer_dist = 1000,
-                       map_extent_fac = 0.1,
-                       plot_filename = "plot_snotel_stations.png",
-                       option_save = TRUE,
-                       option_overwrite = FALSE){
-
+plot_snotel <- function(dir_root,
+                        project_name,
+                        hru_filename = "model_nhru.shp",
+                        gages_filename = "model_npoigages.shp",
+                        buffer_dist = 1000,
+                        map_extent_fac = 0.1,
+                        plot_filename = "plot_snotel_stations.png",
+                        option_save = TRUE,
+                        option_overwrite = FALSE) {
   directories <- fm_trial_set(dir_root, project_name, 1)
   gis_dir <- directories["dir_gis"]
   plot_dir <- directories["dir_plot"]
@@ -42,12 +43,13 @@ plot_snotel<- function(dir_root,
   # READ METADATA -----------------------------------------------------------
 
   # Read metadata from source data folder
-  #https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&counttype=statelist
+  # https://wcc.sc.egov.usda.gov/nwcc/yearcount?network=sntl&counttype=statelist
   # "NRCS National Water Climate Center -
   # Active SNOTEL Stations as of 2025-August-20"
   station_data <- read.csv(system.file("example_obs",
-                                       "nrcs_metadata_clean.csv",
-                                       package = "pwsMultiObsR"))
+    "nrcs_metadata_clean.csv",
+    package = "pwsMultiObsR"
+  ))
 
   # Filter the station data to only include relevant columns
   station_data <- station_data %>%
@@ -55,11 +57,11 @@ plot_snotel<- function(dir_root,
 
   # Convert it to an sf object with lat/long
   stations_sf <- station_data %>%
-    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326)  # Assuming (EPSG:4326)
+    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) # Assuming (EPSG:4326)
 
   # READ .SHP -----------------------------------------------------
 
-  hru_sf <- sf::st_read(file.path(gis_dir,hru_filename))
+  hru_sf <- sf::st_read(file.path(gis_dir, hru_filename))
   hru_sf <- sf::st_transform(hru_sf, sf::st_crs(stations_sf))
 
   gages_sf <- sf::st_read(file.path(gis_dir, gages_filename))
@@ -83,58 +85,80 @@ plot_snotel<- function(dir_root,
 
   # Classify stations as "near"
   near_stations <- sf::st_intersects(
-    stations_sf, shape_buffered, sparse = FALSE)
+    stations_sf, shape_buffered,
+    sparse = FALSE
+  )
 
   # Update the category to "near" if a station is within the buffers
   stations_sf$category[stations_sf$category == "outside" &
-                         rowSums(near_stations) > 0] <- "near-outside"
+    rowSums(near_stations) > 0] <- "near-outside"
   stations_sf$category[stations_sf$category == "within" &
-                         rowSums(near_stations) > 0] <- "near-within"
+    rowSums(near_stations) > 0] <- "near-within"
 
   # PLOT RESULTS --------------------------------------------------------
 
   # Factorize the category column to ensure all categories are always present
   stations_sf$category <- factor(
-    stations_sf$category, levels = c(
-      "outside", "near-outside","near-within", "within"))
+    stations_sf$category,
+    levels = c(
+      "outside", "near-outside", "near-within", "within"
+    )
+  )
 
   # Retrieve the bounding box (extent) of the shapefile
-  bbox <- sf::st_bbox(shape_buffered)  # Use the buffered shapefile
+  bbox <- sf::st_bbox(shape_buffered) # Use the buffered shapefile
 
   # Optionally extend the bounding box for better visualization
   bbox_ext <- bbox
-  bbox_ext[1] <- bbox[1] - (bbox[3] - bbox[1]) * map_extent_fac  # xmin
-  bbox_ext[2] <- bbox[2] - (bbox[4] - bbox[2]) * map_extent_fac  # ymin
-  bbox_ext[3] <- bbox[3] + (bbox[3] - bbox[1]) * map_extent_fac  # xmax
-  bbox_ext[4] <- bbox[4] + (bbox[4] - bbox[2]) * map_extent_fac  # ymax
+  bbox_ext[1] <- bbox[1] - (bbox[3] - bbox[1]) * map_extent_fac # xmin
+  bbox_ext[2] <- bbox[2] - (bbox[4] - bbox[2]) * map_extent_fac # ymin
+  bbox_ext[3] <- bbox[3] + (bbox[3] - bbox[1]) * map_extent_fac # xmax
+  bbox_ext[4] <- bbox[4] + (bbox[4] - bbox[2]) * map_extent_fac # ymax
 
   # Create the plot
   plot <- ggplot() +
-    geom_sf(data = hru_sf, fill = "transparent", color = "darkgray") +  # Plot shapefile
-    geom_sf_text(data = hru_sf, aes(label = model_hru_),
-                 size = 3, color = "black")+
+    geom_sf(
+      data = hru_sf, fill = "transparent", color = "darkgray") + # Plot shapes
+    geom_sf_text(
+      data = hru_sf, aes(label = model_hru_),
+      size = 3, color = "black"
+    ) +
     geom_sf(data = stations_sf, aes(color = category), size = 3) +
-    geom_sf_text(data = stations_sf, aes(label = site_num),
-                 size = 3, vjust = -0.75, hjust = 0, color = "black")+
+    geom_sf_text(
+      data = stations_sf, aes(label = site_num),
+      size = 3, vjust = -0.75, hjust = 0, color = "black"
+    ) +
     geom_sf(data = gages_sf, size = 3, color = "black") +
-    geom_sf_text(data = gages_sf, aes(label = gage_id),
-                 size = 3, vjust = -0.75, hjust = 0, color = "black")+
-    scale_color_manual(values = c("outside" = "red",
-                                  "near-outside" = "goldenrod1",
-                                  "near-within" = "palegreen2",
-                                  "within" = "green4"),
-                       name = "SNOTEL Category",
-                       drop = FALSE, # missing categoreies are still included
-                       labels = c("Outside",
-                                  "Near Outside Boundary",
-                                  "Near Inside HRU Boundary",
-                                  "Within")) +  # Add custom legend labels
+    geom_sf_text(
+      data = gages_sf, aes(label = gage_id),
+      size = 3, vjust = -0.75, hjust = 0, color = "black"
+    ) +
+    scale_color_manual(
+      values = c(
+        "outside" = "red",
+        "near-outside" = "goldenrod1",
+        "near-within" = "palegreen2",
+        "within" = "green4"
+      ),
+      name = "SNOTEL Category",
+      drop = FALSE, # missing categoreies are still included
+      labels = c(
+        "Outside",
+        "Near Outside Boundary",
+        "Near Inside HRU Boundary",
+        "Within"
+      )
+    ) + # Add custom legend labels
     theme_minimal() +
-    labs(title = "Station Locations Relative to Shapefile Boundaries",
-         x = "Longitude", y = "Latitude") +
-    coord_sf(xlim = c(bbox_ext[1], bbox_ext[3]),
-             ylim = c(bbox_ext[2], bbox_ext[4])) +  # Limit to extended bbox
-    theme(legend.position = "right")  # Position the legend on the right
+    labs(
+      title = "Station Locations Relative to Shapefile Boundaries",
+      x = "Longitude", y = "Latitude"
+    ) +
+    coord_sf(
+      xlim = c(bbox_ext[1], bbox_ext[3]),
+      ylim = c(bbox_ext[2], bbox_ext[4])
+    ) + # Limit to extended bbox
+    theme(legend.position = "right") # Position the legend on the right
 
   # Print the plot
   print(plot)
@@ -143,22 +167,28 @@ plot_snotel<- function(dir_root,
   plot_path <- file.path(plot_dir, plot_filename)
   file_exists_flag <- file.exists(plot_path)
 
-  if (option_save & !file_exists_flag){
-    ggsave(filename = plot_path,
-           plot = plot, width = 6.5, height = 6.5, dpi = 300)
-    cat("Stations plot has been saved as",
-        file.path(plot_dir, plot_filename), " \n")
-  }
-  else if (option_save & file_exists_flag & option_overwrite){
-    ggsave(filename = plot_path,
-           plot = plot, width = 6.5, height = 6.5, dpi = 300)
+  if (option_save & !file_exists_flag) {
+    ggsave(
+      filename = plot_path,
+      plot = plot, width = 6.5, height = 6.5, dpi = 300
+    )
+    cat(
+      "Stations plot has been saved as",
+      file.path(plot_dir, plot_filename), " \n"
+    )
+  } else if (option_save & file_exists_flag & option_overwrite) {
+    ggsave(
+      filename = plot_path,
+      plot = plot, width = 6.5, height = 6.5, dpi = 300
+    )
     cat("Plot overwritten")
-    cat("Stations plot has been saved as",
-        file.path(plot_dir, plot_filename), " \n")
+    cat(
+      "Stations plot has been saved as",
+      file.path(plot_dir, plot_filename), " \n"
+    )
   }
 
   return(plot)
-
 }
 
 
@@ -177,8 +207,10 @@ plot_snotel<- function(dir_root,
 #' @return ggplot: plot object
 #' @examples
 #'
-#' plot_usgs("/Users/me/mywork/",
-#'             "east_river")
+#' plot_usgs(
+#'   "/Users/me/mywork/",
+#'   "east_river"
+#' )
 #'
 #' @export
 #' @import ggplot2
@@ -192,22 +224,21 @@ plot_usgs <- function(dir_root,
                       map_extent_fac = 0.1,
                       plot_filename = "plot_usgs_stations.png",
                       option_save = TRUE,
-                      option_overwrite = FALSE){
-
+                      option_overwrite = FALSE) {
   directories <- fm_trial_set(dir_root, project_name, 1)
   gis_dir <- directories["dir_gis"]
   plot_dir <- directories["dir_plot"]
 
   # READ .SHP -----------------------------------------------------
 
-  wgs84_crs = "+proj=longlat +datum=WGS84 +no_def"
+  wgs84_crs <- "+proj=longlat +datum=WGS84 +no_def"
 
   # Read the shapefile using sf (ensure it's in the same CRS)
-  hru_sf <- sf::st_read(file.path(gis_dir,hru_filename))%>%
+  hru_sf <- sf::st_read(file.path(gis_dir, hru_filename)) %>%
     st_transform(sf::st_crs(wgs84_crs))
-  gages_sf <- sf::st_read(file.path(gis_dir, gages_filename))%>%
+  gages_sf <- sf::st_read(file.path(gis_dir, gages_filename)) %>%
     st_transform(sf::st_crs(wgs84_crs))
-  seg_sf <- sf::st_read(file.path(gis_dir, seg_filename))%>%
+  seg_sf <- sf::st_read(file.path(gis_dir, seg_filename)) %>%
     st_transform(sf::st_crs(wgs84_crs))
 
   # PLOT RESULTS --------------------------------------------------------
@@ -216,10 +247,10 @@ plot_usgs <- function(dir_root,
 
   # Optionally extend the bounding box for better visualization
   bbox_ext <- bbox
-  bbox_ext[1] <- bbox[1] - (bbox[3] - bbox[1]) * map_extent_fac  # xmin
-  bbox_ext[2] <- bbox[2] - (bbox[4] - bbox[2]) * map_extent_fac  # ymin
-  bbox_ext[3] <- bbox[3] + (bbox[3] - bbox[1]) * map_extent_fac  # xmax
-  bbox_ext[4] <- bbox[4] + (bbox[4] - bbox[2]) * map_extent_fac  # ymax
+  bbox_ext[1] <- bbox[1] - (bbox[3] - bbox[1]) * map_extent_fac # xmin
+  bbox_ext[2] <- bbox[2] - (bbox[4] - bbox[2]) * map_extent_fac # ymin
+  bbox_ext[3] <- bbox[3] + (bbox[3] - bbox[1]) * map_extent_fac # xmax
+  bbox_ext[4] <- bbox[4] + (bbox[4] - bbox[2]) * map_extent_fac # ymax
 
   # Create the plot
   plot <- ggplot() +
@@ -227,18 +258,26 @@ plot_usgs <- function(dir_root,
     geom_sf(data = hru_sf, fill = "transparent", color = "darkgray") +
     # GAGES
     geom_sf(data = gages_sf, size = 3, color = "black") +
-    geom_sf_text(data = gages_sf, aes(label = gage_id),
-                 size = 3, vjust = -0.75, hjust = 0, color = "black")+
+    geom_sf_text(
+      data = gages_sf, aes(label = gage_id),
+      size = 3, vjust = -0.75, hjust = 0, color = "black"
+    ) +
     # SEGMENTS
     geom_sf(data = seg_sf, size = 3, color = "cyan3") +
-    geom_sf_text(data = seg_sf, aes(label = model_seg_),
-                 size = 3, vjust = -0.75, hjust = 0, color = "black")+
+    geom_sf_text(
+      data = seg_sf, aes(label = model_seg_),
+      size = 3, vjust = -0.75, hjust = 0, color = "black"
+    ) +
     theme_minimal() +
-    labs(title = "USGS Stream Gage Locations",
-         x = "Longitude", y = "Latitude") +
-    coord_sf(xlim = c(bbox_ext[1], bbox_ext[3]),
-             ylim = c(bbox_ext[2], bbox_ext[4])) +  # Limit to extended bbox
-    theme(legend.position = "right")  # Position the legend on the right
+    labs(
+      title = "USGS Stream Gage Locations",
+      x = "Longitude", y = "Latitude"
+    ) +
+    coord_sf(
+      xlim = c(bbox_ext[1], bbox_ext[3]),
+      ylim = c(bbox_ext[2], bbox_ext[4])
+    ) + # Limit to extended bbox
+    theme(legend.position = "right") # Position the legend on the right
 
   # Print the plot
   print(plot)
@@ -247,22 +286,28 @@ plot_usgs <- function(dir_root,
   plot_path <- file.path(plot_dir, plot_filename)
   file_exists_flag <- file.exists(plot_path)
 
-  if (option_save & !file_exists_flag){
-    ggsave(filename = plot_path,
-           plot = plot, width = 6.5, height = 6.5, dpi = 300)
-    cat("Stations plot has been saved as",
-        file.path(plot_dir, plot_filename), " \n")
-  }
-  else if (option_save & file_exists_flag & option_overwrite){
-    ggsave(filename = plot_path,
-           plot = plot, width = 6.5, height = 6.5, dpi = 300)
+  if (option_save & !file_exists_flag) {
+    ggsave(
+      filename = plot_path,
+      plot = plot, width = 6.5, height = 6.5, dpi = 300
+    )
+    cat(
+      "Stations plot has been saved as",
+      file.path(plot_dir, plot_filename), " \n"
+    )
+  } else if (option_save & file_exists_flag & option_overwrite) {
+    ggsave(
+      filename = plot_path,
+      plot = plot, width = 6.5, height = 6.5, dpi = 300
+    )
     cat("Plot overwritten")
-    cat("Stations plot has been saved as",
-        file.path(plot_dir, plot_filename), " \n")
+    cat(
+      "Stations plot has been saved as",
+      file.path(plot_dir, plot_filename), " \n"
+    )
   }
 
   return(plot)
-
 }
 
 
@@ -305,11 +350,13 @@ plot_heatmap_eta <- function(
 
   # Check if the output plot file already exists
   if (file.exists(file.path(dir_plot, plot_filename))) {
-    stop(paste("The file:", plot_filename,
-               "already exists. Aborting to avoid overwriting."))
+    stop(paste(
+      "The file:", plot_filename,
+      "already exists. Aborting to avoid overwriting."
+    ))
   }
 
-  if (is.null(type1_params) | is.null(type2_params)){
+  if (is.null(type1_params) | is.null(type2_params)) {
     warning("Both error types must be input for them to show.")
   }
 
@@ -317,7 +364,9 @@ plot_heatmap_eta <- function(
   df_eta$param_groups <- param_attributes$module
 
   df_eta$param_names <- factor(
-    df_eta$param_names, levels = rev(sort(unique( df_eta$param_names))))
+    df_eta$param_names,
+    levels = rev(sort(unique(df_eta$param_names)))
+  )
 
   # Pivot the dataframe
   df_eta_long <- df_eta %>%
@@ -327,7 +376,7 @@ plot_heatmap_eta <- function(
       values_to = "eta.star"
     )
 
-  if (!is.null(type1_params) & !is.null(type2_params)){
+  if (!is.null(type1_params) & !is.null(type2_params)) {
     error_data <- df_eta_long %>%
       rowwise() %>%
       mutate(
@@ -338,7 +387,7 @@ plot_heatmap_eta <- function(
         )
       ) %>%
       ungroup() %>%
-      select(col_name, param_names, error_marker)  # Keep only relevant columns
+      select(col_name, param_names, error_marker) # Keep only relevant columns
 
     df_eta_long <- df_eta_long %>%
       left_join(error_data, by = c("param_names", "col_name"))
@@ -348,9 +397,12 @@ plot_heatmap_eta <- function(
   df_eta_long <- df_eta_long %>%
     mutate(
       param_groups = factor(
-        param_groups, levels = c(
-          "Climate", "Solar", "PET","Snow","Interception", "Runoff",
-          "Soil", "Groundwater"))
+        param_groups,
+        levels = c(
+          "Climate", "Solar", "PET", "Snow", "Interception", "Runoff",
+          "Soil", "Groundwater"
+        )
+      )
     )
 
   palette_name <- "YlGnBu"
@@ -358,13 +410,16 @@ plot_heatmap_eta <- function(
   breaks <- seq(0, 1, by = 0.2)
 
   p <- ggplot(
-    df_eta_long, aes(x = col_name, y = param_names, fill = eta.star)) +
+    df_eta_long, aes(x = col_name, y = param_names, fill = eta.star)
+  ) +
     geom_tile(color = "white", linewidth = 0.2) +
     scale_fill_stepsn(
       name = "η*", colours = colors4plot,
-      guide = "coloursteps", breaks = breaks) +
+      guide = "coloursteps", breaks = breaks
+    ) +
     facet_grid(
-      rows = vars(param_groups), scales = "free", space = "free") +
+      rows = vars(param_groups), scales = "free", space = "free"
+    ) +
     labs(x = "Observations", y = "Parameters") +
     theme_minimal(base_size = 9) +
     theme(
@@ -374,7 +429,7 @@ plot_heatmap_eta <- function(
       strip.text.y = element_text(size = 9, face = "bold")
     )
 
-  if (!is.null(type1_params) & !is.null(type2_params)){
+  if (!is.null(type1_params) & !is.null(type2_params)) {
     p <- p + geom_text(
       aes(label = error_marker),
       vjust = 0.5, size = 2, na.rm = TRUE

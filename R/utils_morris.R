@@ -10,7 +10,8 @@
 #' @import jsonlite
 .load_json_if_exists <- function(var, metric, dir_dynamic_output) {
   path <- file.path(
-    dir_dynamic_output, paste0("/!list_", metric, "_", var, ".json"))
+    dir_dynamic_output, paste0("/!list_", metric, "_", var, ".json")
+  )
   if (file.exists(path)) {
     return(jsonlite::fromJSON(path))
   } else {
@@ -26,8 +27,10 @@
   if (is.array(lst) && length(dim(lst)) == 3) {
     nyears <- dim(lst)[2]
     nhru <- dim(lst)[3]
-    return(lapply(1:nyears,
-                  function(i) lapply(1:nhru, function(j) lst[, i, j])))
+    return(lapply(
+      1:nyears,
+      function(i) lapply(1:nhru, function(j) lst[, i, j])
+    ))
   } else if (is.matrix(lst)) {
     return(lapply(seq_len(ncol(lst)), function(i) lst[, i]))
   } else if (is.list(lst)) {
@@ -84,7 +87,9 @@
     bootstrap_samples[[param_idx]] <- replicate(n_boot,
       {
         sampled_values <- sample(
-          param_values, length(param_values), replace = TRUE)
+          param_values, length(param_values),
+          replace = TRUE
+        )
         mu <- mean(sampled_values)
         mu_star <- mean(abs(sampled_values))
         sigma <- sd(sampled_values)
@@ -96,11 +101,14 @@
 
   # Combine results into matrices for mu, mu_star, and sigma
   mu_boot <- do.call(cbind, lapply(
-    bootstrap_samples, function(res) sapply(res, `[[`, "mu")))
+    bootstrap_samples, function(res) sapply(res, `[[`, "mu")
+  ))
   mu_star_boot <- do.call(cbind, lapply(
-    bootstrap_samples, function(res) sapply(res, `[[`, "mu_star")))
+    bootstrap_samples, function(res) sapply(res, `[[`, "mu_star")
+  ))
   sigma_boot <- do.call(cbind, lapply(
-    bootstrap_samples, function(res) sapply(res, `[[`, "sigma")))
+    bootstrap_samples, function(res) sapply(res, `[[`, "sigma")
+  ))
 
   # Compute mean and standard deviation for each parameter
   # This is equation 29 and 30 in Campolongo, 1997
@@ -135,21 +143,31 @@
 
   # Create the result matrices
   ci_results <- list(
-    mu = cbind(lower = mu_lower,
-               mean = mu_mean,
-               upper = mu_upper),
-    mu_star = cbind(lower = mu_star_lower,
-                    mean = mu_star_mean,
-                    upper = mu_star_upper),
-    sigma = cbind(lower = sigma_lower,
-                  mean = sigma_mean,
-                  upper = sigma_upper),
-    eta_star = cbind(lower = eta_star_lower,
-                     mean = eta_star_mean,
-                     upper = eta_star_upper),
-    nu_star = cbind(lower = nu_star_lower,
-                    nean = nu_star_mean,
-                    upper = nu_star_upper)
+    mu = cbind(
+      lower = mu_lower,
+      mean = mu_mean,
+      upper = mu_upper
+    ),
+    mu_star = cbind(
+      lower = mu_star_lower,
+      mean = mu_star_mean,
+      upper = mu_star_upper
+    ),
+    sigma = cbind(
+      lower = sigma_lower,
+      mean = sigma_mean,
+      upper = sigma_upper
+    ),
+    eta_star = cbind(
+      lower = eta_star_lower,
+      mean = eta_star_mean,
+      upper = eta_star_upper
+    ),
+    nu_star = cbind(
+      lower = nu_star_lower,
+      nean = nu_star_mean,
+      upper = nu_star_upper
+    )
   )
 
   # Assign column names for clarity
@@ -171,7 +189,8 @@
       .recursive_apply,
       n_boot = n_boot,
       sd_level = sd_level,
-      morris_design = morris_design))
+      morris_design = morris_design
+    ))
   } else if (is.numeric(lst) && length(lst) == nrow(morris_design$X)) {
     ee_matrix <- .extract_ee(lst, morris_design)
     baseline <- .compute_measures(ee_matrix)
@@ -214,15 +233,16 @@
 #' @import jsonlite
 #' @export
 sensi_eet <- function(dir_root,
-                         project_name,
-                         trial_number,
-                         variables = c("swe", "q"),
-                         metrics = c("gof", "metric"),
-                         n_boot = 1000,
-                         sd_level = 1) {
-
-  directories <- pwsMultiObsR:::fm_trial_set(dir_root, project_name,
-                                             trial_number)
+                      project_name,
+                      trial_number,
+                      variables = c("swe", "q"),
+                      metrics = c("gof", "metric"),
+                      n_boot = 1000,
+                      sd_level = 1) {
+  directories <- pwsMultiObsR:::fm_trial_set(
+    dir_root, project_name,
+    trial_number
+  )
   dir_dynamic_input <- directories["dir_dynamic_input"]
   dir_dynamic_output <- directories["dir_dynamic_output"]
 
@@ -236,7 +256,8 @@ sensi_eet <- function(dir_root,
       # list_data[[paste0(var, "_", metric)]] <- (
       #   .load_json_if_exists(var, metric, dir_dynamic_output))
       list_data <- c(list_data, .load_json_if_exists(
-        var, metric, dir_dynamic_output))
+        var, metric, dir_dynamic_output
+      ))
     }
   }
 
@@ -245,8 +266,10 @@ sensi_eet <- function(dir_root,
   for (key in names(list_data)) {
     if (!is.null(list_data[[key]])) {
       split_data <- .split_to_vectors(list_data[[key]])
-      results[[key]] <- .recursive_apply(split_data, n_boot,
-                                         sd_level, morris_design)
+      results[[key]] <- .recursive_apply(
+        split_data, n_boot,
+        sd_level, morris_design
+      )
     }
   }
 
@@ -347,14 +370,13 @@ sensi_eet <- function(dir_root,
 #' @import tidyverse
 #' @export
 fit_logis <- function(df_mean, # of eta star values, nrow = nparams
-                          df_lower,
-                          df_upper,
-                          ncol_plot, #
-                          dir_plot,
-                          start_xo = 0.8,
-                          start_k = 1,
-                          plot_filename = "plot_sensi_logis.png") {
-
+                      df_lower,
+                      df_upper,
+                      ncol_plot, #
+                      dir_plot,
+                      start_xo = 0.8,
+                      start_k = 1,
+                      plot_filename = "plot_sensi_logis.png") {
   # FIT LOGISTIC FN  ---------------------------------------------------------
 
   # Initialize lists
@@ -399,7 +421,8 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
             aa = max(response) - min(response),
             k, xo
           ),
-          start = list(k = start_k, xo = start_xo * length(response)), # Calibrating inits
+          start = list(
+            k = start_k, xo = start_xo * length(response)), # Calibrating inits
           control = nls.control(maxiter = 100, tol = 1e-05)
         )
       },
@@ -460,9 +483,9 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
     # Find row names where the values are above the threshold
     params_above_threshold <- sorted_names[column_mean >= threshold]
     params_type_1 <- sorted_names[(column_mean >= threshold) &
-                                    (column_lower < threshold)]
+      (column_lower < threshold)]
     params_type_2 <- sorted_names[(column_mean < threshold) &
-                                    (column_upper >= threshold)]
+      (column_upper >= threshold)]
 
     # Append the identifed parameters to the lists
     sensi_param_list[[column_name]] <- params_above_threshold
@@ -475,7 +498,7 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
       column_mean = column_mean, # blue points
       column_lower = column_lower, # err bars
       column_upper = column_upper, # err bars
-      data_type = rep(column_name, length(column_mean)), #input df, facet vars
+      data_type = rep(column_name, length(column_mean)), # input df, facet vars
       threshold_val = threshold
     ) # threshold value
 
@@ -513,10 +536,14 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
       width = 0.2, color = "gray"
     ) +
     geom_point(aes(x = rank1, y = column_mean), size = 0.5, color = "blue") +
-    geom_line(data = plot_data_long_fitted, aes(x = fitted_x, y = fitted_y),
-              color = "black", linewidth = 0.25) + # Logistic curve
-    geom_hline(aes(yintercept = threshold_val), linetype = "dashed",
-               color = "red", linewidth = 0.5) + # Threshold line
+    geom_line(
+      data = plot_data_long_fitted, aes(x = fitted_x, y = fitted_y),
+      color = "black", linewidth = 0.25
+    ) + # Logistic curve
+    geom_hline(aes(yintercept = threshold_val),
+      linetype = "dashed",
+      color = "red", linewidth = 0.5
+    ) + # Threshold line
     facet_wrap(~data_type, ncol = ncol_plot) + # or nrow = 2
     labs(x = "Param. Rank", y = "Sensitivity Index (η*)") +
     theme_light(base_size = 9) +
@@ -551,8 +578,10 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
 
   # Check if the output plot file already exists
   if (file.exists(file.path(dir_plot, plot_filename))) {
-    warning(paste("The file:", plot_filename,
-               "already exists. Aborting to avoid overwriting."))
+    warning(paste(
+      "The file:", plot_filename,
+      "already exists. Aborting to avoid overwriting."
+    ))
     return(output_list)
   }
 
@@ -561,8 +590,10 @@ fit_logis <- function(df_mean, # of eta star values, nrow = nparams
     filename = file.path(dir_plot, plot_filename),
     plot = p, width = 6.5, height = 4, dpi = 300
   )
-  cat("Logistic plot has been saved as",
-      file.path(dir_plot, plot_filename), " \n")
+  cat(
+    "Logistic plot has been saved as",
+    file.path(dir_plot, plot_filename), " \n"
+  )
 
   return(output_list)
 }

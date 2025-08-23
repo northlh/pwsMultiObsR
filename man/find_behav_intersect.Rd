@@ -17,8 +17,7 @@ list contains a set of column names in 'df_gof' to intersect.}
 vectors of the simulation indices for behavioral simulations.}
 
 \item{q_col}{integer: The column index in 'df_gof' which is used to return
-a dataframe of the behavioral goodness of fit for that column. Generally
-expects that Q is of interest.}
+a dataframe of the behavioral goodness of fit for that column.}
 }
 \value{
 list: contains a dataframe if simulation indexes the meet the

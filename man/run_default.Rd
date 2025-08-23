@@ -13,7 +13,7 @@ run_default(dir_root, project_name, trial_number, pwsenvname = "pws")
 
 \item{trial_number}{integer: trial number, leading zeros not needed}
 
-\item{pwsenvname}{character: The name of your python environmnent where the
+\item{pwsenvname}{character: The name of your python environment where the
 python 'pywatershed' package is installed.}
 
 \item{runs}{numeric: a sequence of simulation indices to execute. The

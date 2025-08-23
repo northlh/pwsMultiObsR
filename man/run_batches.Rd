@@ -25,9 +25,11 @@ run_batches(
 \item{trial_number}{integer: trial number, leading zeros not needed}
 
 \item{runs}{numeric: a sequence of simulation indices to execute. The
-indices correspond to the parameter file indices. E.g. seq(1, nruns, 1).}
+indices correspond to the parameter file indices. If left as NULL, it will
+default to seq(1, nruns, 1). Nruns is determined by the project_name that
+is passed.}
 
-\item{pwsenvname}{character: The name of your python environmnent where the
+\item{pwsenvname}{character: The name of your python environment where the
 python 'pywatershed' package is installed.}
 
 \item{out_var_names}{character: a vector of the output file names that should
