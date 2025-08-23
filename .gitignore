@@ -1,4 +1,19 @@
-.Rproj.user
+
 inst/doc
-.DS_Store
 isnt/pubscripts/GEE_raw
+
+# R session files
+.Rhistory
+.RData
+.Ruserdata
+
+# RStudio project files
+.Rproj.user/
+
+# Output / generated files
+*.Rproj
+.Rproj.user
+.Rproj.user/*
+
+# Other
+.DS_Store
